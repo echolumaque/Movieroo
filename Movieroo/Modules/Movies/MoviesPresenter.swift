@@ -14,6 +14,7 @@ protocol MoviesPresenter: AnyObject {
     
     func fetchTrendingMovies() async
     func didFetchedMovies(result: Result<Movie, NetworkingError>)
+    func showMovieDetail(for movie: MovieResult)
 }
 
 class MoviesPresenterImpl: MoviesPresenter {
@@ -26,12 +27,10 @@ class MoviesPresenterImpl: MoviesPresenter {
     }
     
     func didFetchedMovies(result: Result<Movie, NetworkingError>) {
-        switch result {
-        case .success(let movie):
-            view?.update(movie: movie)
-            
-        case .failure(let error):
-            view?.update(error: error)
-        }
+        view?.update(result: result)
+    }
+    
+    func showMovieDetail(for movie: MovieResult) {
+        router?.showMovieDetail(for: movie)
     }
 }

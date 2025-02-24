@@ -12,6 +12,7 @@ typealias MoviesEntryPoint = MoviesView & UIViewController
 protocol MoviesRouter {
     var view: MoviesEntryPoint? { get }
     static func start() -> MoviesRouter
+    func showMovieDetail(for movie: MovieResult)
 }
 
 class MoviesRouterImpl: MoviesRouter {
@@ -24,12 +25,10 @@ class MoviesRouterImpl: MoviesRouter {
     }
     
     static func start() -> any MoviesRouter {
-        let router = MoviesRouterImpl()
         let view = MoviesViewController()
-        let presenter = MoviesPresenterImpl()
         let interactor = MoviesInteractorImpl()
-        
-        router.moviesViewController = view
+        let presenter = MoviesPresenterImpl()
+        let router = MoviesRouterImpl()
         
         view.presenter = presenter
         
@@ -38,6 +37,14 @@ class MoviesRouterImpl: MoviesRouter {
         presenter.view = view
         presenter.interactor = interactor
         presenter.router = router
+        
+        router.moviesViewController = view
         return router
+    }
+    
+    func showMovieDetail(for movie: MovieResult) {
+        let movieDetail = MovieDetailRouterImpl.start(movieId: movie.id)
+        let movieDetailView = movieDetail.view
+        moviesViewController?.present(movieDetailView ?? UIViewController(), animated: true)
     }
 }

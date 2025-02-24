@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Movie: Codable {
+struct Movie: Codable, Hashable {
     let page: Int
     let movieResults: [MovieResult]
     let totalPages, totalResults: Int
@@ -20,8 +20,8 @@ struct Movie: Codable {
     }
 }
 
-struct MovieResult: Codable {
-    let backdropPath: String
+struct MovieResult: Codable, Hashable {
+    let backdropPath: String?
     let id: Int
     let title, originalTitle, overview, posterPath: String
     let adult: Bool

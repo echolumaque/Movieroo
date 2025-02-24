@@ -18,10 +18,10 @@ class MainTabRouterImpl: MainTabRouter {
     weak var view: (any MainTabEntryPoint)?
     
     static func start() -> MainTabRouter {
-        let router = MainTabRouterImpl()
         let view = MainTabViewController()
-        let presenter = MainTabPresenterImpl()
         let interactor = MainTabInteractorImpl()
+        let presenter = MainTabPresenterImpl()
+        let router = MainTabRouterImpl()
         
         view.presenter = presenter
         view.viewControllers = [createMoviesVC(), createBookmarksVC()]
@@ -40,6 +40,7 @@ class MainTabRouterImpl: MainTabRouter {
         let moviesModule = MoviesRouterImpl.start()
         let moviesVC = moviesModule.view
         moviesVC?.tabBarItem = UITabBarItem(title: "Movies", image: UIImage(systemName: "popcorn.fill"), tag: 0)
+        moviesVC?.title = "Movies"
         
         return UINavigationController(rootViewController: moviesVC ?? UIViewController())
     }

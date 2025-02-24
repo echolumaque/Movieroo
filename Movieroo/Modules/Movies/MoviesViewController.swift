@@ -9,49 +9,115 @@ import UIKit
 
 protocol MoviesView: AnyObject {
     var presenter: MoviesPresenter? { get set }
-    func update(movie: Movie)
-    func update(error: NetworkingError)
+    func update(result: Result<Movie, NetworkingError>)
 }
 
 class MoviesViewController: UIViewController, MoviesView {
-    var presenter: MoviesPresenter?
+    enum Section { case main }
     
-    let label = UILabel()
+    var movie: Movie!
+    
+    var collectionView: UICollectionView!
+    var dataSource: UICollectionViewDiffableDataSource<Section, MovieResult>!
+    var presenter: MoviesPresenter?
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        configureViewController()
+        configureSearchController()
+        configureCollectionView()
+        fetchTrendingMovies()
+        configureDataSource()
+    }
+    
+//    override func viewWillAppear(_ animated: Bool) {
+//        super.viewWillAppear(animated)
+//        fetchTrendingMovies()
+//    }
+    
+    private func configureViewController() {
         view.backgroundColor = .systemBackground
-        view.addSubview(label)
-        label.numberOfLines = 4
-        label.translatesAutoresizingMaskIntoConstraints = false
-        
-        NSLayoutConstraint.activate([
-            label.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            label.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            label.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            label.heightAnchor.constraint(equalToConstant: 300)
-        ])
-        
+    }
+    
+    private func configureSearchController() {
+        let searchController = UISearchController()
+        searchController.searchResultsUpdater = self
+        searchController.searchBar.placeholder = "Search for a category"
+        navigationItem.searchController = searchController
+        navigationItem.hidesSearchBarWhenScrolling = false
+    }
+    
+    private func configureCollectionView() {
+        collectionView = UICollectionView(frame: view.bounds, collectionViewLayout: UIHelper.createListFlowLayout(in: view))
+        view.addSubview(collectionView)
+        collectionView.delegate = self
+        collectionView.backgroundColor = .systemBackground
+        collectionView.register(MovieCell.self, forCellWithReuseIdentifier: MovieCell.reuseID)
+    }
+    
+    private func fetchTrendingMovies() {
         Task {
+            showLoadingView()
             await presenter?.fetchTrendingMovies()
         }
     }
     
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        label.frame = CGRect(x: 0, y: 0, width: 200, height: 50)
-        label.center = view.center
-    }
-    
-    func update(movie: Movie) {
-        DispatchQueue.main.async {
-            self.label.text = "\(movie.movieResults.count)"
+    private func configureDataSource() {
+        dataSource = UICollectionViewDiffableDataSource<Section, MovieResult>(collectionView: collectionView) { collectionView, indexPath, movie in
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: MovieCell.reuseID, for: indexPath) as! MovieCell
+            cell.set(movie: movie)
+            
+            return cell
         }
     }
     
-    func update(error: NetworkingError) {
-        DispatchQueue.main.async {
-            self.label.text = error.localizedDescription
+    override func updateContentUnavailableConfiguration(using state: UIContentUnavailableConfigurationState) {
+        if let movie, !movie.movieResults.isEmpty {
+            contentUnavailableConfiguration = nil
+        } else {
+            var config = UIContentUnavailableConfiguration.empty()
+            config.image = UIImage(systemName: "video.slash.fill")
+            config.text = "No movies"
+            config.secondaryText = "There are no movies. Please try again later."
+            contentUnavailableConfiguration = config
         }
     }
+    
+    func update(result: Result<Movie, NetworkingError>) {
+        dismissLoadingView()
+        DispatchQueue.main.async {
+            switch result {
+            case .success(let movie):
+                self.movie = movie
+                self.updateDataSource(movieResult: movie.movieResults)
+                self.setNeedsUpdateContentUnavailableConfiguration()
+                
+            case .failure(_):
+                self.setNeedsUpdateContentUnavailableConfiguration()
+            }
+        }
+    }
+    
+    private func updateDataSource(movieResult: [MovieResult]) {
+        var snapshot = NSDiffableDataSourceSnapshot<Section, MovieResult>()
+        snapshot.appendSections([.main])
+        snapshot.appendItems(movie.movieResults)
+        DispatchQueue.main.async { self.dataSource.apply(snapshot, animatingDifferences: true) }
+    }
+}
+
+extension MoviesViewController: UISearchResultsUpdating {
+    func updateSearchResults(for searchController: UISearchController) {
+        
+    }
+}
+
+extension MoviesViewController: UICollectionViewDelegate {
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        presenter?.showMovieDetail(for: movie.movieResults[indexPath.item])
+    }
+}
+
+#Preview {
+    MoviesViewController()
 }

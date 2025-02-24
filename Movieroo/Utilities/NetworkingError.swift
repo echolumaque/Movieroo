@@ -13,4 +13,5 @@ enum NetworkingError: Error {
     case invalidStatusCode(statusCode: Int)
     case requestFailed(innerError: URLError)
     case otherError(innerError: Error)
+    case otherError(message: String)
 }
