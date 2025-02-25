@@ -9,32 +9,37 @@ import Foundation
 
 protocol MovieDetailInteractor: AnyObject {
     var presenter: MovieDetailPresenter? { get set }
-    func fetchMovieDetail(for id: Int) async throws(NetworkingError) -> MovieDetail
-    func fetchReview(for id: Int) async throws(NetworkingError) -> MovieReview
-    func fetchMovieCertification(for id: Int) async throws(NetworkingError) -> MovieCertification
+    func fetchMovieDetauls(for id: Int) async throws(NetworkingError) -> WrappedMovieDetail
 }
 
 class MovieDetailInteractorImpl: MovieDetailInteractor {
     weak var presenter: (any MovieDetailPresenter)?
     
-    func fetchMovieDetail(for id: Int) async throws(NetworkingError) -> MovieDetail  {
-        let constructerdUrl = "https://api.themoviedb.org/3/movie/\(id)?language=en-US"
-        let fetchedDetail: MovieDetail = try await NetworkManager.shared.baseNetworkCall(for: constructerdUrl)
-        
-        return fetchedDetail
-    }
-    
-    func fetchReview(for id: Int) async throws(NetworkingError) -> MovieReview {
-        let constructerdUrl = "https://api.themoviedb.org/3/movie/\(id)/reviews?language=en-US&page=1"
-        let fetchedReview: MovieReview = try await NetworkManager.shared.baseNetworkCall(for: constructerdUrl)
-        
-        return fetchedReview
-    }
-    
-    func fetchMovieCertification(for id: Int) async throws(NetworkingError) -> MovieCertification {
-        let constructedUrl = "https://api.themoviedb.org/3/movie/\(id)/release_dates"
-        let fetchedCertification: MovieCertification = try await NetworkManager.shared.baseNetworkCall(for: constructedUrl)
-        
-        return fetchedCertification
+    func fetchMovieDetauls(for id: Int) async throws(NetworkingError) -> WrappedMovieDetail {
+        do {
+            let movieDetailUrl = "https://api.themoviedb.org/3/movie/\(id)?language=en-US"
+            let movieReviewUrl = "https://api.themoviedb.org/3/movie/\(id)/reviews?language=en-US&page=1"
+            let movieCertificationUrl = "https://api.themoviedb.org/3/movie/\(id)/release_dates"
+            
+            async let fetchedMovieDetail: MovieDetail = try NetworkManager.shared.baseNetworkCall(for: movieDetailUrl)
+            async let fetchedMovieReview: MovieReview = try NetworkManager.shared.baseNetworkCall(for: movieReviewUrl)
+            async let fetchedMovieCertification: MovieCertification = try NetworkManager.shared.baseNetworkCall(for: movieCertificationUrl)
+            
+            let (movieDetail, movieReview, movieCertificaiton) = try await (fetchedMovieDetail, fetchedMovieReview, fetchedMovieCertification)
+            let wrappedMovieDetail = WrappedMovieDetail(
+                movieDetail: movieDetail,
+                movieReview: movieReview,
+                movieCertification: movieCertificaiton
+            )
+            
+            return wrappedMovieDetail
+        } catch {
+            print("Error in MovieDetailInteractor: \(error)")
+            if let networkingError = error as? NetworkingError {
+                throw networkingError
+            } else {
+                throw .otherError(innerError: error)
+            }
+        }
     }
 }

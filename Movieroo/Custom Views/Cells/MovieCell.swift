@@ -13,18 +13,18 @@ class MovieCell: UICollectionViewCell {
     private let horizontalPadding: CGFloat = 20
     private let verticalPadding: CGFloat = 8
     
-    let moviePoster = UIImageView()
-    let titleLabel = UILabel()
-    let overviewLabel = UILabel()
-    let miscInfoView = UIStackView()
+    private let moviePoster = UIImageView()
+    private let titleLabel = DynamicLabel(font: UIFont.preferredFont(for: .title1, weight: .bold), minimumScaleFactor: 0.9, numberOfLines: 1)
+    private let overviewLabel = DynamicLabel(font: UIFont.preferredFont(forTextStyle: .body), minimumScaleFactor: 0.9, numberOfLines: 5)
+    private let miscInfoView = UIStackView()
     
-    let releaseDateIcon = UIImageView(image: UIImage(systemName: "popcorn.fill"))
-    let releaseDateLabel = UILabel()
+    private let releaseDateIcon = UIImageView(image: UIImage(systemName: "popcorn.fill"))
+    private let releaseDateLabel = DynamicLabel(textColor: .secondaryLabel, font: UIFont.preferredFont(forTextStyle: .footnote))
     
     private let starRatingModel = StarRatingModel(rating: 0, maxRating: 5)
     var starsView: StarsView { StarsView(model: starRatingModel) }
     
-    let voteCountLabel = UILabel()
+    private let voteCountLabel = UILabel()
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -35,16 +35,13 @@ class MovieCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func set(movie: MovieResult) {
-        Task {
-            moviePoster.image = await NetworkManager.shared.downloadImage(from: "https://image.tmdb.org/t/p/w92\(movie.posterPath)")
-        }
-        
+    func set(movie: MovieResult) async {
+        moviePoster.image = await NetworkManager.shared.downloadImage(from: "https://image.tmdb.org/t/p/w92\(movie.posterPath)")
         titleLabel.text = movie.originalTitle
         overviewLabel.text = movie.overview
         releaseDateLabel.text = movie.releaseDate.formatDateToLocale
         starRatingModel.rating = movie.voteAverage / 2
-        voteCountLabel.text = "(\(movie.voteCount))"
+        voteCountLabel.text = "(\(movie.voteCount.commaRepresentation))"
     }
     
     private func configure() {
@@ -69,12 +66,7 @@ class MovieCell: UICollectionViewCell {
     
     private func configureTitle() {
         addSubview(titleLabel)
-        titleLabel.numberOfLines = 1
-        titleLabel.adjustsFontSizeToFitWidth = true
-        titleLabel.minimumScaleFactor = 0.9
         titleLabel.lineBreakMode = .byTruncatingTail
-        titleLabel.font = UIFont.preferredFont(forTextStyle: .title1, compatibleWith: UITraitCollection(legibilityWeight: .bold))
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
             titleLabel.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor),
@@ -85,12 +77,7 @@ class MovieCell: UICollectionViewCell {
     
     private func configureOverviewLabel() {
         addSubview(overviewLabel)
-        overviewLabel.numberOfLines = 5
-        overviewLabel.adjustsFontSizeToFitWidth = true
-        overviewLabel.minimumScaleFactor = 0.9
         overviewLabel.lineBreakMode = .byTruncatingTail
-        overviewLabel.font = UIFont.preferredFont(forTextStyle: .body)
-        overviewLabel.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
             overviewLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: verticalPadding),
@@ -124,9 +111,6 @@ class MovieCell: UICollectionViewCell {
         releaseDateIcon.translatesAutoresizingMaskIntoConstraints = false
         releaseDateIcon.tintColor = .secondaryLabel
         
-        releaseDateLabel.translatesAutoresizingMaskIntoConstraints = false
-        releaseDateLabel.font = UIFont.preferredFont(forTextStyle: .footnote)
-        releaseDateLabel.textColor = .secondaryLabel
 
         NSLayoutConstraint.activate([
             releaseDateIcon.widthAnchor.constraint(equalToConstant: 20),
@@ -156,20 +140,21 @@ class MovieCell: UICollectionViewCell {
 
 #Preview {
     let movieCell = MovieCell()
-    
-    movieCell.set(movie: MovieResult(backdropPath: Optional("/9nhjGaFLKtddDPtPaX5EmKqsWdH.jpg"),
-                                     id: 950396,
-                                     title: "The Gorge",
-                                     originalTitle: "The Gorge",
-                                     overview: "Two highly trained operatives grow close from a distance after being sent to guard opposite sides of a mysterious gorge. When an evil below emerges, they must work together to survive what lies within.",
-                                     posterPath: "/7iMBZzVZtG0oBug4TfqDb9ZxAOa.jpg",
-                                     adult: false,
-                                     genreIDS: [10749, 878, 53],
-                                     popularity: 897.524,
-                                     releaseDate: "2025-02-13",
-                                     video: false,
-                                     voteAverage: 7.838,
-                                     voteCount: 1196))
+    Task {
+        await movieCell.set(movie: MovieResult(backdropPath: Optional("/9nhjGaFLKtddDPtPaX5EmKqsWdH.jpg"),
+                                         id: 950396,
+                                         title: "The Gorge",
+                                         originalTitle: "The Gorge",
+                                         overview: "Two highly trained operatives grow close from a distance after being sent to guard opposite sides of a mysterious gorge. When an evil below emerges, they must work together to survive what lies within.",
+                                         posterPath: "/7iMBZzVZtG0oBug4TfqDb9ZxAOa.jpg",
+                                         adult: false,
+                                         genreIDS: [10749, 878, 53],
+                                         popularity: 897.524,
+                                         releaseDate: "2025-02-13",
+                                         video: false,
+                                         voteAverage: 7.838,
+                                         voteCount: 1196))
+    }
     
     return movieCell
 }

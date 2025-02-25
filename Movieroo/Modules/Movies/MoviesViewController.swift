@@ -65,7 +65,7 @@ class MoviesViewController: UIViewController, MoviesView {
     private func configureDataSource() {
         dataSource = UICollectionViewDiffableDataSource<Section, MovieResult>(collectionView: collectionView) { collectionView, indexPath, movie in
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: MovieCell.reuseID, for: indexPath) as! MovieCell
-            cell.set(movie: movie)
+            Task { await cell.set(movie: movie) }
             
             return cell
         }
