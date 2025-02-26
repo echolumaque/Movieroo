@@ -23,7 +23,8 @@ struct Movie: Codable, Hashable {
 struct MovieResult: Codable, Hashable {
     let backdropPath: String?
     let id: Int
-    let title, originalTitle, overview, posterPath: String
+    let title, originalTitle, overview: String
+    let posterPath: String?
     let adult: Bool
     let genreIDS: [Int]
     let popularity: Double

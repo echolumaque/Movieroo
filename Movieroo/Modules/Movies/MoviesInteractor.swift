@@ -17,7 +17,7 @@ class MoviesInteractorImpl: MoviesInteractor {
     
     func getTrendingMovies() async {
         do {
-            let constructedUrl = "https://api.themoviedb.org/3/trending/movie/week?language=en-US"
+            let constructedUrl = "https://api.themoviedb.org/3/discover/movie?include_adult=false&include_video=false&language=en-US&page=1&sort_by=vote_count.desc&vote_average.gte=8&vote_count.gte=100"
             let fetchedMovie: Movie = try await NetworkManager.shared.baseNetworkCall(for: constructedUrl)
             presenter?.didFetchedMovies(result: .success(fetchedMovie))
         } catch {

@@ -13,8 +13,8 @@ class MovieCell: UICollectionViewCell {
     private let horizontalPadding: CGFloat = 20
     private let verticalPadding: CGFloat = 8
     
-    private let moviePoster = UIImageView()
-    private let titleLabel = DynamicLabel(font: UIFont.preferredFont(for: .title1, weight: .bold), minimumScaleFactor: 0.9, numberOfLines: 1)
+    private let moviePoster = UIImageView(image: UIImage(systemName: "popcorn.fill"))
+    private let titleLabel = DynamicLabel(font: UIFont.preferredFont(for: .title1, weight: .bold), minimumScaleFactor: 0.5, numberOfLines: 2)
     private let overviewLabel = DynamicLabel(font: UIFont.preferredFont(forTextStyle: .body), minimumScaleFactor: 0.9, numberOfLines: 5)
     private let miscInfoView = UIStackView()
     
@@ -35,9 +35,15 @@ class MovieCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func set(movie: MovieResult) async {
-        moviePoster.image = await NetworkManager.shared.downloadImage(from: "https://image.tmdb.org/t/p/w92\(movie.posterPath)")
-        titleLabel.text = movie.originalTitle
+    func set(movie: MovieResult) {
+        if let posterPath = movie.posterPath {
+            Task {
+                moviePoster.image = await NetworkManager.shared.downloadImage(from: "https://image.tmdb.org/t/p/w92\(posterPath)")
+            }
+        } else {
+            moviePoster.tintColor = .systemPurple
+        }
+        titleLabel.text = movie.title
         overviewLabel.text = movie.overview
         releaseDateLabel.text = movie.releaseDate.formatDateToLocale
         starRatingModel.rating = movie.voteAverage / 2
@@ -83,7 +89,6 @@ class MovieCell: UICollectionViewCell {
             overviewLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: verticalPadding),
             overviewLabel.leadingAnchor.constraint(equalTo: moviePoster.trailingAnchor, constant: horizontalPadding),
             overviewLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -horizontalPadding),
-            overviewLabel.bottomAnchor.constraint(equalTo: moviePoster.bottomAnchor)
         ])
     }
     
@@ -97,9 +102,11 @@ class MovieCell: UICollectionViewCell {
         configureRatingMiscInfoComponent()
         
         NSLayoutConstraint.activate([
-            miscInfoView.topAnchor.constraint(equalTo: moviePoster.bottomAnchor, constant: verticalPadding),
+            miscInfoView.topAnchor.constraint(greaterThanOrEqualTo: overviewLabel.bottomAnchor, constant: verticalPadding),
+            miscInfoView.topAnchor.constraint(greaterThanOrEqualTo: moviePoster.bottomAnchor, constant: verticalPadding),
             miscInfoView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: horizontalPadding),
             miscInfoView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -horizontalPadding),
+            miscInfoView.bottomAnchor.constraint(equalTo: bottomAnchor)
         ])
     }
     
@@ -140,21 +147,19 @@ class MovieCell: UICollectionViewCell {
 
 #Preview {
     let movieCell = MovieCell()
-    Task {
-        await movieCell.set(movie: MovieResult(backdropPath: Optional("/9nhjGaFLKtddDPtPaX5EmKqsWdH.jpg"),
-                                         id: 950396,
-                                         title: "The Gorge",
-                                         originalTitle: "The Gorge",
-                                         overview: "Two highly trained operatives grow close from a distance after being sent to guard opposite sides of a mysterious gorge. When an evil below emerges, they must work together to survive what lies within.",
-                                         posterPath: "/7iMBZzVZtG0oBug4TfqDb9ZxAOa.jpg",
-                                         adult: false,
-                                         genreIDS: [10749, 878, 53],
-                                         popularity: 897.524,
-                                         releaseDate: "2025-02-13",
-                                         video: false,
-                                         voteAverage: 7.838,
-                                         voteCount: 1196))
-    }
+    movieCell.set(movie: MovieResult(backdropPath: Optional("/9nhjGaFLKtddDPtPaX5EmKqsWdH.jpg"),
+                                     id: 950396,
+                                     title: "The Gorge The Gorge The Gorge The Gorge The Gorge",
+                                     originalTitle: "The Gorge",
+                                     overview: "Two highly trained operatives grow close from a distance after being sent to guard opposite sides of a mysterious gorge. When an evil below emerges, they must work together to survive what lies within. Two highly trained operatives grow close from a distance after being sent to guard opposite sides of a mysterious gorge. When an evil below emerges, they must work together to survive what lies within.",
+                                     posterPath: "/7iMBZzVZtG0oBug4TfqDb9ZxAOa.jpg",
+                                     adult: false,
+                                     genreIDS: [10749, 878, 53],
+                                     popularity: 897.524,
+                                     releaseDate: "2025-02-13",
+                                     video: false,
+                                     voteAverage: 7.838,
+                                     voteCount: 1196))
     
     return movieCell
 }

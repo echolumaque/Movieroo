@@ -25,5 +25,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window?.windowScene = windowScene
         window?.rootViewController = router.view
         window?.makeKeyAndVisible()
+        
+        UINavigationBar.appearance().tintColor = .systemPurple
     }
 }

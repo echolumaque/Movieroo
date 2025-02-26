@@ -41,13 +41,13 @@ class ReviewCell: UITableViewCell {
     func set(review: Review) {
         if let avatarPath = review.authorDetails?.avatarPath {
             Task {
-                authorAvatar.image =  await NetworkManager.shared.downloadImage(from: "https://image.tmdb.org/t/p/w45\(avatarPath)")
+                authorAvatar.image = await NetworkManager.shared.downloadImage(from: "https://image.tmdb.org/t/p/w45\(avatarPath)")
             }
         }
         
         authorNameLabel.text = review.author
         
-        reviewDateLabel.text = review.updatedAt.formatISO8601DateToLocale
+        reviewDateLabel.text = review.createdAt.formatISO8601DateToLocale
         
         var correctRating: CGFloat
         if let rating = review.authorDetails?.rating { correctRating = CGFloat(rating / 2) }

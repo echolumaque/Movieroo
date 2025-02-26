@@ -11,4 +11,5 @@ struct WrappedMovieDetail: Codable {
     let movieDetail: MovieDetail
     let movieReview: MovieReview
     let movieCertification: MovieCertification
+    let movieRecommendations: [MovieResult]
 }

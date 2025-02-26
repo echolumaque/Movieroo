@@ -41,8 +41,12 @@ extension UIViewController {
     
     func presentSafariVC(with url: URL) {
         let safariVC = SFSafariViewController(url: url)
-        safariVC.preferredControlTintColor = .systemGreen
+        safariVC.preferredControlTintColor = .systemPurple
         present(safariVC, animated: true)
+    }
+    
+    @objc func dismissVC() {
+        dismiss(animated: true)
     }
     
 //    func showEmptyStateView(with message: String, in view: UIView) {

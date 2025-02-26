@@ -13,8 +13,6 @@ protocol MoviesView: AnyObject {
 }
 
 class MoviesViewController: UIViewController, MoviesView {
-    enum Section { case main }
-    
     var movie: Movie!
     
     var collectionView: UICollectionView!
@@ -48,11 +46,22 @@ class MoviesViewController: UIViewController, MoviesView {
     }
     
     private func configureCollectionView() {
-        collectionView = UICollectionView(frame: view.bounds, collectionViewLayout: UIHelper.createListFlowLayout(in: view))
-        view.addSubview(collectionView)
+        let size = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .estimated(100))
+        collectionView = UICollectionView(
+            frame: .zero,
+            collectionViewLayout: UIHelper.createVerticalCompositionalLayout(
+                itemSize: size,
+                groupSize: size,
+                interGroupSpacing: 20
+            )
+        )
+        
         collectionView.delegate = self
         collectionView.backgroundColor = .systemBackground
         collectionView.register(MovieCell.self, forCellWithReuseIdentifier: MovieCell.reuseID)
+        
+        view.addSubview(collectionView)
+        collectionView.pinToEdges(of: view)
     }
     
     private func fetchTrendingMovies() {
@@ -64,8 +73,8 @@ class MoviesViewController: UIViewController, MoviesView {
     
     private func configureDataSource() {
         dataSource = UICollectionViewDiffableDataSource<Section, MovieResult>(collectionView: collectionView) { collectionView, indexPath, movie in
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: MovieCell.reuseID, for: indexPath) as! MovieCell
-            Task { await cell.set(movie: movie) }
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: MovieCell.reuseID, for: indexPath) as? MovieCell
+            cell?.set(movie: movie)
             
             return cell
         }
