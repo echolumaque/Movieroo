@@ -21,6 +21,8 @@ class MoviesViewController: UIViewController, MoviesView {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        navigationController?.navigationBar.prefersLargeTitles = true
         configureViewController()
         configureSearchController()
         configureCollectionView()

@@ -14,17 +14,30 @@ class MovieCell: UICollectionViewCell {
     private let verticalPadding: CGFloat = 8
     
     private let moviePoster = UIImageView(image: UIImage(systemName: "popcorn.fill"))
-    private let titleLabel = DynamicLabel(font: UIFont.preferredFont(for: .title1, weight: .bold), minimumScaleFactor: 0.5, numberOfLines: 2)
-    private let overviewLabel = DynamicLabel(font: UIFont.preferredFont(forTextStyle: .body), minimumScaleFactor: 0.9, numberOfLines: 5)
+    private let titleLabel = DynamicLabel(
+        font: UIFont.preferredFont(for: .title1,  weight: .bold),
+        minimumScaleFactor: 0.5,
+        numberOfLines: 2
+    )
+    
+    private let overviewLabel = DynamicLabel(
+        font: UIFont.preferredFont(forTextStyle: .body),
+        minimumScaleFactor: 0.9,
+        numberOfLines: 5
+    )
     private let miscInfoView = UIStackView()
     
     private let releaseDateIcon = UIImageView(image: UIImage(systemName: "popcorn.fill"))
     private let releaseDateLabel = DynamicLabel(textColor: .secondaryLabel, font: UIFont.preferredFont(forTextStyle: .footnote))
     
     private let starRatingModel = StarRatingModel(rating: 0, maxRating: 5)
-    var starsView: StarsView { StarsView(model: starRatingModel) }
+    private var starsView: StarsView { StarsView(model: starRatingModel) }
     
-    private let voteCountLabel = UILabel()
+    private let voteCountLabel = DynamicLabel(
+        textColor: .secondaryLabel,
+        font: UIFont.preferredFont(forTextStyle: .footnote),
+        numberOfLines: 1
+    )
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -130,9 +143,6 @@ class MovieCell: UICollectionViewCell {
     }
     
     private func configureRatingMiscInfoComponent() {
-        voteCountLabel.textColor = .secondaryLabel
-        voteCountLabel.font = UIFont.preferredFont(forTextStyle: .footnote)
-        
         let hostedStarsView = UIHostingController(rootView: starsView)
         
         let voteComponent = UIStackView(arrangedSubviews: [hostedStarsView.view, voteCountLabel])
@@ -146,20 +156,8 @@ class MovieCell: UICollectionViewCell {
 }
 
 #Preview {
-    let movieCell = MovieCell()
-    movieCell.set(movie: MovieResult(backdropPath: Optional("/9nhjGaFLKtddDPtPaX5EmKqsWdH.jpg"),
-                                     id: 950396,
-                                     title: "The Gorge The Gorge The Gorge The Gorge The Gorge",
-                                     originalTitle: "The Gorge",
-                                     overview: "Two highly trained operatives grow close from a distance after being sent to guard opposite sides of a mysterious gorge. When an evil below emerges, they must work together to survive what lies within. Two highly trained operatives grow close from a distance after being sent to guard opposite sides of a mysterious gorge. When an evil below emerges, they must work together to survive what lies within.",
-                                     posterPath: "/7iMBZzVZtG0oBug4TfqDb9ZxAOa.jpg",
-                                     adult: false,
-                                     genreIDS: [10749, 878, 53],
-                                     popularity: 897.524,
-                                     releaseDate: "2025-02-13",
-                                     video: false,
-                                     voteAverage: 7.838,
-                                     voteCount: 1196))
+    let cell = MovieCell()
+    cell.set(movie: WrappedMovieDetail.test.movieRecommendations.first!)
     
-    return movieCell
+    return cell
 }

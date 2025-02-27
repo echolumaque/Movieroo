@@ -22,7 +22,7 @@ class ReviewCell: UITableViewCell {
     }
     
     private let reviewDateLabel = DynamicLabel(font: UIFont.preferredFont(for: .callout, weight: .regular), numberOfLines: 1)
-     private let contentLabel = DynamicLabel(font: UIFont.preferredFont(for: .body, weight: .regular))
+    private let contentLabel = DynamicLabel(font: UIFont.preferredFont(for: .body, weight: .regular))
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -31,11 +31,6 @@ class ReviewCell: UITableViewCell {
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
-    }
-    
-    convenience init(review: Review) {
-        self.init(style: .default, reuseIdentifier: "ReviewCell")
-        set(review: review)
     }
     
     func set(review: Review) {
@@ -131,22 +126,8 @@ class ReviewCell: UITableViewCell {
 }
 
 #Preview {
-    ReviewCell(
-        review: Review(
-            author: "r96sk",
-            authorDetails: Movieroo.AuthorDetails(
-                name: "",
-                username: "r96sk",
-                avatarPath: Optional(
-                    "/mwR7rFHoDcobAx1i61I3skzMW3U.jpg"
-                ),
-                rating: 8
-            ),
-            content: "Rubbish poster aside, <em>\'Mufasa: The Lion King\'</em> is a success.\r\n\r\n\nI can\'t overlook that poster, how amateur can you get - it genuinely looks like something I\'d whip up seconds before the deadline. Thankfully, the movie itself is very good, it\'s one I enjoyed quite a bit. The animation is class, the lions look amazingly majestic. I will say the white ones look a bit iffy, but that\'s nothing even close to a big issue.\r\n\r\nThe voice cast are all perfectly good. Aaron Pierre, Kelvin Harrison Jr. (only now realising his character wasn\'t called Tucker... bit embarrassing on my part), John Kani et al. all merit props. The standouts for me, however, are Mads Mikkelsen and Lennie James - two actors I do love watching (or listening to, in this case), admittedly.\r\n\r\nMusic-wise, it\'s not the strongest - I can\'t recall any of the songs, to be honest. That\'s not actually a terrible thing though, as it means none of the musical numbers grated on me either - and that\'s always a win in my books. Elsewhere, Timon & Pumbaa are unamusing and wasted, but at the same time are unnecessarily forced into this prequel/sequel.\r\n\r\nObviously, this still falls far adrift of the beloved original animated film. Nevertheless, I\'ll hold it in higher esteem than the 2019 remake, even if I didn\'t overly mind that one to be fair. Oh, lastly, nice touch dedicating this to James Earl Jones at the get-go - was expecting it at the end.",
-            createdAt: "2024-12-23T18:13:28.704Z",
-            id: "6769a84846a5a438790b24d1",
-            updatedAt: "2024-12-23T18:13:28.807Z",
-            url: "https://www.themoviedb.org/review/6769a84846a5a438790b24d1"
-        )
-    )
+    let cell = ReviewCell()
+    cell.set(review: WrappedMovieDetail.test.movieReview.reviews.first!)
+    
+    return cell
 }

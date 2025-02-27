@@ -34,11 +34,6 @@ class RecommendationCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    convenience init(movieDetail: MovieDetail) {
-        self.init(frame: .zero)
-        self.movieDetail = movieDetail
-    }
-    
     func set(movieResult: MovieResult) {
         if let posterPath = movieResult.posterPath {
             Task {
@@ -56,16 +51,8 @@ class RecommendationCell: UICollectionViewCell {
         posterView.contentMode = .scaleAspectFit
         posterView.clipsToBounds = true
         posterView.layer.cornerRadius = 10
-        if Environment.isForPreview {
-            Task {
-                posterView.image = await NetworkManager.shared.downloadImage(from: "https://image.tmdb.org/t/p/w154\(movieDetail.posterPath)")
-            }
-        }
         
         titleLabel.textAlignment = .center
-        
-        if Environment.isForPreview { titleLabel.text = "Mufasa" }
-        if Environment.isForPreview { ratingLabel.text = "141" }
         
         let starsView = UIHostingController(rootView: starsView)
         starsView.view.translatesAutoresizingMaskIntoConstraints = false
@@ -95,5 +82,8 @@ class RecommendationCell: UICollectionViewCell {
 }
 
 #Preview {
-    RecommendationCell(movieDetail: MovieDetail(adult: false, backdropPath: "/cVh8Af7a9JMOJl75ML3Dg2QVEuq.jpg", belongsToCollection: Movieroo.BelongsToCollection(id: 762512, name: "The Lion King (Reboot) Collection", posterPath: "/dGpIRn4Nqi63JO1RlKxjcPbQSAw.jpg", backdropPath: "/jIgM7YNVft0YGeXsqrh3oG5TWLx.jpg"), budget: 200000000, genres: [Movieroo.Genre(id: 12, name: "Adventure"), Movieroo.Genre(id: 10751, name: "Family"), Movieroo.Genre(id: 16, name: "Animation")], homepage: "https://movies.disney.com/mufasa-the-lion-king", id: 762509, imdbID: "tt13186482", originCountry: ["US"], originalLanguage: "en", originalTitle: "Mufasa: The Lion King", overview: "Mufasa, a cub lost and alone, meets a sympathetic lion named Taka, the heir to a royal bloodline. The chance meeting sets in motion an expansive journey of a group of misfits searching for their destiny.", popularity: 724.285, posterPath: "/9bXHaLlsFYpJUutg4E6WXAjaxDi.jpg", productionCompanies: [Movieroo.ProductionCompany(id: 2, logoPath: Optional("/wdrCwmRnLFJhEoH8GSfymY85KHT.png"), name: "Walt Disney Pictures", originCountry: "US")], productionCountries: [Movieroo.ProductionCountry(iso3166_1: "US", name: "United States of America")], releaseDate: "2024-12-18", revenue: 688700870, runtime: 118, spokenLanguages: [Movieroo.SpokenLanguage(englishName: "English", iso639_1: "en", name: "English")], status: "Released", tagline: "The story of an orphan who would be king.", title: "Mufasa: The Lion King", video: false, voteAverage: 7.448, voteCount: 1345))
+    let cell = RecommendationCell()
+    cell.set(movieResult: WrappedMovieDetail.test.movieRecommendations.first!)
+    
+    return cell
 }
