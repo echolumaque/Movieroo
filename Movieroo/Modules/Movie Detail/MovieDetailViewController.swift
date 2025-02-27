@@ -11,6 +11,7 @@ import SwiftUI
 protocol MovieDetailView: AnyObject {
     var presenter: MovieDetailPresenter? { get set }
     func updateMovieDetails(_ result: Result<WrappedMovieDetail, NetworkingError>)
+    func updateRecommendationDataSource()
 }
 
 class MovieDetailViewController: UIViewController, MovieDetailView {
@@ -40,23 +41,10 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
     
     private let recommendationLabel = DynamicLabel(textColor: .secondaryLabel, font: UIFont.preferredFont(for: .title3, weight: .bold))
     
-    private var recommendationCollectionView: UICollectionView!
+    private var recommendationCollectionView: HorizontalCompositionalUICollectionView!
     private var recommendationDataSource: UICollectionViewDiffableDataSource<Section, MovieResult>!
     private let collectionViewDivider = Divider()
     private let reviewTableView = DynamicTableView()
-    
-//    init(
-//        movieDetail: MovieDetail? = nil,
-//        movieReview: MovieReview? = nil,
-//        movieCertification: MovieCertification? = nil,
-//        movieRecommendations: [MovieResult] = []
-//    ) {
-//        super.init(nibName: nil, bundle: nil)
-//        self.movieDetail = movieDetail
-//        self.movieReview = movieReview
-//        self.movieCertification = movieCertification
-//        self.movieRecommendations = movieRecommendations
-//    }
     
     init(movieId: Int) {
         super.init(nibName: nil, bundle: nil)
@@ -145,12 +133,7 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
     func configurePosterView() {
         posterImageView.translatesAutoresizingMaskIntoConstraints = false
         posterImageView.contentMode = .scaleAspectFit
-//        if Environment.isForPreview {
-//            Task {
-//                posterImageView.image = await NetworkManager.shared.downloadImage(from: "https://image.tmdb.org/t/p/w1280\(movieDetail.backdropPath).jpg")
-//            }
-//        }
-
+        
         NSLayoutConstraint.activate([
             posterImageView.topAnchor.constraint(equalTo: scrollView.topAnchor),
             posterImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
@@ -160,9 +143,6 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
     }
     
     func configureTitle() {
-        movieTitle.translatesAutoresizingMaskIntoConstraints = false
-//        if Environment.isForPreview { movieTitle.text = movieDetail.title }
-        
         NSLayoutConstraint.activate([
             movieTitle.topAnchor.constraint(equalTo: posterImageView.bottomAnchor, constant: verticalPadding),
             movieTitle.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: horizontalPadding),
@@ -171,18 +151,6 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
     }
     
     func configureSubtitle() {
-        movieSubtitles.translatesAutoresizingMaskIntoConstraints = false
-//        if Environment.isForPreview {
-//            let genres = movieDetail.genres.map { $0.name }.joined(separator: ", ")
-//            let certification = movieCertification
-//                .resultElement
-//                .first(where: { $0.iso3166_1 == "US" })?
-//                .releaseDates.first?
-//                .certification ?? ""
-//            
-//            movieSubtitles.text = "\(certification) • \(genres) • \(movieDetail.runtime.timeString)"
-//        }
-        
         NSLayoutConstraint.activate([
             movieSubtitles.topAnchor.constraint(equalTo: movieTitle.bottomAnchor, constant: verticalPadding),
             movieSubtitles.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: horizontalPadding),
@@ -193,8 +161,6 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
     func configureOverview() {
         let overviewDivider = Divider()
         contentView.addSubview(overviewDivider)
-        
-//        if Environment.isForPreview { overview.text = movieDetail.overview  }
         
         NSLayoutConstraint.activate([
             overviewDivider.topAnchor.constraint(equalTo: movieSubtitles.bottomAnchor, constant: verticalPadding),
@@ -227,14 +193,13 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
     
     func configureRecommendations() {
         let collectionLayoutSize = NSCollectionLayoutSize(widthDimension: .absolute(154), heightDimension: .fractionalHeight(1.0))
-        recommendationCollectionView = UICollectionView(
-            frame: .zero,
-            collectionViewLayout: UIHelper.createHorizontalCompositionalLayout(
-                itemSize: collectionLayoutSize,
-                groupSize: collectionLayoutSize,
-                interGroupSpacing: 20
-            )
+        recommendationCollectionView = HorizontalCompositionalUICollectionView(
+            itemSize: collectionLayoutSize,
+            groupSize: collectionLayoutSize,
+            interGroupSpacing: 20,
+            horizontalCompositionalDelegate: self
         )
+        recommendationCollectionView.delegate = self
         recommendationCollectionView.translatesAutoresizingMaskIntoConstraints = false
         recommendationCollectionView.register(RecommendationCell.self, forCellWithReuseIdentifier: RecommendationCell.reuseID)
         
@@ -283,15 +248,17 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
         }
     }
     
-    private func updateRecommendationDataSource(movieRecommendations: [MovieResult]) {
+    func updateRecommendationDataSource() {
         var snapshot = NSDiffableDataSourceSnapshot<Section, MovieResult>()
         snapshot.appendSections([.main])
-        snapshot.appendItems(movieRecommendations)
+        snapshot.appendItems(presenter?.movieRecommendations ?? [])
         recommendationDataSource.apply(snapshot, animatingDifferences: true)
+        
+        print("is invoked")
     }
     
     private func getMovieDetailAndReview() {
-        Task { try await presenter?.fetchMovieDetals(for: movieId) }
+        Task { try await presenter?.fetchMovieDetails(for: movieId) }
     }
     
     func updateMovieDetails(_ result: Result<WrappedMovieDetail, NetworkingError>) {
@@ -299,12 +266,41 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
         case .success(let wrappedMovieDetail):
             DispatchQueue.main.async {
                 self.set(wrappedMovieDetail: wrappedMovieDetail)
-                self.updateRecommendationDataSource(movieRecommendations: wrappedMovieDetail.movieRecommendations)
+                self.updateRecommendationDataSource()
             }
             
         case .failure(let failure):
             print("Network error: \(failure)")
         }
+    }
+}
+
+extension MovieDetailViewController: UICollectionViewDelegate, HorizontalCompositionalUICollectionViewDelegate {
+    func collectionViewDidInvalidateVisibleItems(visibleItems: [any NSCollectionLayoutVisibleItem], contentOffset: CGPoint, environment: any NSCollectionLayoutEnvironment) {
+        guard let presenter else { return}
+        guard recommendationCollectionView.numberOfSections > 0 else { return }
+        let totalItems = recommendationCollectionView.numberOfItems(inSection: 0)
+        guard totalItems > 1 else { return }
+        
+        let targetIndexPath = IndexPath(item: totalItems - 1, section: 0)
+        if recommendationCollectionView.indexPathsForVisibleItems.contains(targetIndexPath) {
+            guard !presenter.hasTriggeredLastVisible, presenter.page > 0, presenter.page <= 500 else {
+                presenter.hasTriggeredLastVisible = false
+                return
+            }
+            
+            presenter.page += 1
+            presenter.hasTriggeredLastVisible = true
+            Task { try await presenter.fetchMovieRecommendations(for: movieId, page: presenter.page) }
+        } else {
+            presenter.hasTriggeredLastVisible = false
+        }
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+//        guard let presenter else { return }
+//        presenter.showMovieDetail(for: presenter.movieResults[indexPath.item])
+        print("tapped")
     }
 }
 

@@ -36,7 +36,8 @@ struct UIHelper {
     static func createHorizontalCompositionalLayout(
         itemSize: NSCollectionLayoutSize,
         groupSize: NSCollectionLayoutSize,
-        interGroupSpacing: CGFloat
+        interGroupSpacing: CGFloat,
+        visibleItemsInvalidationHandler: NSCollectionLayoutSectionVisibleItemsInvalidationHandler? = nil
     ) -> UICollectionViewCompositionalLayout {
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
         let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
@@ -45,6 +46,7 @@ struct UIHelper {
         let section = NSCollectionLayoutSection(group: group)
         section.orthogonalScrollingBehavior = .continuous
         section.interGroupSpacing = interGroupSpacing
+        section.visibleItemsInvalidationHandler = visibleItemsInvalidationHandler
         
         return UICollectionViewCompositionalLayout(section: section)
     }

@@ -20,7 +20,9 @@ struct Movie: Codable, Hashable {
     }
 }
 
-struct MovieResult: Codable, Hashable {
+struct MovieResult: Codable {
+    let uuid = UUID()
+    
     let backdropPath: String?
     let id: Int
     let title, originalTitle, overview: String
@@ -47,4 +49,9 @@ struct MovieResult: Codable, Hashable {
         case voteAverage = "vote_average"
         case voteCount = "vote_count"
     }
+}
+
+extension MovieResult: Hashable {
+    static func ==(lhs: MovieResult, rhs: MovieResult) -> Bool { lhs.uuid == rhs.uuid }
+    func hash(into hasher: inout Hasher) { hasher.combine(uuid) }
 }

@@ -10,12 +10,12 @@ import UIKit
 protocol MoviesView: AnyObject {
     var presenter: MoviesPresenter? { get set }
     func updateUI()
-//    func update(result: Result<[MovieResult], NetworkingError>)
 }
 
 class MoviesViewController: UIViewController, MoviesView {
     var movieCollectionView: UICollectionView!
     var dataSource: UICollectionViewDiffableDataSource<Section, MovieResult>!
+    
     var presenter: MoviesPresenter?
     
     override func viewDidLoad() {
@@ -40,11 +40,6 @@ class MoviesViewController: UIViewController, MoviesView {
             contentUnavailableConfiguration = config
         }
     }
-    
-//    override func viewWillAppear(_ animated: Bool) {
-//        super.viewWillAppear(animated)
-//        fetchTrendingMovies()
-//    }
     
     private func configureViewController() {
         view.backgroundColor = .systemBackground
@@ -93,11 +88,11 @@ class MoviesViewController: UIViewController, MoviesView {
     }
     
     private func fetchTrendingMovies() {
-        Task {
-            showLoadingView()
-            await presenter?.fetchTrendingMovies(page: page)
-            dismissLoadingView()
-        }
+        guard let presenter else { return }
+        
+        showLoadingView()
+        Task { await presenter.fetchTrendingMovies(page: presenter.page) }
+        dismissLoadingView()
     }
     
     func updateUI() {
@@ -106,9 +101,6 @@ class MoviesViewController: UIViewController, MoviesView {
             self.setNeedsUpdateContentUnavailableConfiguration()
         }
     }
-    
-    private var hasTriggeredSecondToLastVisible = false
-    private var page = 1
 }
 
 extension MoviesViewController: UISearchResultsUpdating {
@@ -124,30 +116,23 @@ extension MoviesViewController: UICollectionViewDelegate {
     }
     
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        guard let presenter else { return }
         guard movieCollectionView.numberOfSections > 0 else { return }
-        // Get the total number of items in section 0.
         let totalItems = movieCollectionView.numberOfItems(inSection: 0)
-        
-        // Ensure there's at least 2 items, otherwise the second-to-last doesn't exist.
         guard totalItems > 1 else { return }
         
-        // Calculate the target indexPath for the second-to-last item.
         let targetIndexPath = IndexPath(item: totalItems - 1, section: 0)
-        
-        // Check if the target indexPath is among the visible items.
-        
         if movieCollectionView.indexPathsForVisibleItems.contains(targetIndexPath) {
-            guard !hasTriggeredSecondToLastVisible, page > 0, page <= 500 else {
-                hasTriggeredSecondToLastVisible = false
+            guard !presenter.hasTriggeredSecondToLastVisible, presenter.page > 0, presenter.page <= 500 else {
+                presenter.hasTriggeredSecondToLastVisible = false
                 return
             }
             
-            page += 1
-            hasTriggeredSecondToLastVisible = true
+            presenter.page += 1
+            presenter.hasTriggeredSecondToLastVisible = true
             fetchTrendingMovies()
         } else {
-            // Optionally reset the flag if the target item scrolls offscreen.
-            hasTriggeredSecondToLastVisible = false
+            presenter.hasTriggeredSecondToLastVisible = false
         }
     }
 }
