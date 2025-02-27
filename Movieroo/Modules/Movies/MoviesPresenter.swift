@@ -12,7 +12,9 @@ protocol MoviesPresenter: AnyObject {
     var interactor: MoviesInteractor? { get set }
     var view: MoviesView? { get set }
     
-    func fetchTrendingMovies() async
+    var movieResults: [MovieResult] { get set }
+    
+    func fetchTrendingMovies(page: Int) async
     func didFetchedMovies(result: Result<Movie, NetworkingError>)
     func showMovieDetail(for movie: MovieResult)
 }
@@ -21,13 +23,19 @@ class MoviesPresenterImpl: MoviesPresenter {
     var router: (any MoviesRouter)?
     var interactor: MoviesInteractor?
     weak var view: (any MoviesView)?
+    var movieResults: [MovieResult] = []
     
-    func fetchTrendingMovies() async {
-        await interactor?.getTrendingMovies()
+    func fetchTrendingMovies(page: Int) async {
+        await interactor?.getTrendingMovies(page: page)
     }
     
     func didFetchedMovies(result: Result<Movie, NetworkingError>) {
-        view?.update(result: result)
+        switch result {
+        case .success(let movie): movieResults.append(contentsOf: movie.movieResults)
+        case .failure(_): break
+        }
+        
+        view?.updateUI()
     }
     
     func showMovieDetail(for movie: MovieResult) {

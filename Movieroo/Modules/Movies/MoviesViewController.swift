@@ -9,13 +9,12 @@ import UIKit
 
 protocol MoviesView: AnyObject {
     var presenter: MoviesPresenter? { get set }
-    func update(result: Result<Movie, NetworkingError>)
+    func updateUI()
+//    func update(result: Result<[MovieResult], NetworkingError>)
 }
 
 class MoviesViewController: UIViewController, MoviesView {
-    var movie: Movie!
-    
-    var collectionView: UICollectionView!
+    var movieCollectionView: UICollectionView!
     var dataSource: UICollectionViewDiffableDataSource<Section, MovieResult>!
     var presenter: MoviesPresenter?
     
@@ -28,6 +27,18 @@ class MoviesViewController: UIViewController, MoviesView {
         configureCollectionView()
         fetchTrendingMovies()
         configureDataSource()
+    }
+    
+    override func updateContentUnavailableConfiguration(using state: UIContentUnavailableConfigurationState) {
+        if let movieResults = presenter?.movieResults, !movieResults.isEmpty {
+            contentUnavailableConfiguration = nil
+        } else {
+            var config = UIContentUnavailableConfiguration.empty()
+            config.image = UIImage(systemName: "video.slash.fill")
+            config.text = "No movies"
+            config.secondaryText = "There are no movies. Please try again later."
+            contentUnavailableConfiguration = config
+        }
     }
     
 //    override func viewWillAppear(_ animated: Bool) {
@@ -49,7 +60,7 @@ class MoviesViewController: UIViewController, MoviesView {
     
     private func configureCollectionView() {
         let size = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .estimated(100))
-        collectionView = UICollectionView(
+        movieCollectionView = UICollectionView(
             frame: .zero,
             collectionViewLayout: UIHelper.createVerticalCompositionalLayout(
                 itemSize: size,
@@ -58,23 +69,15 @@ class MoviesViewController: UIViewController, MoviesView {
             )
         )
         
-        collectionView.delegate = self
-        collectionView.backgroundColor = .systemBackground
-        collectionView.register(MovieCell.self, forCellWithReuseIdentifier: MovieCell.reuseID)
+        movieCollectionView.delegate = self
+        movieCollectionView.register(MovieCell.self, forCellWithReuseIdentifier: MovieCell.reuseID)
         
-        view.addSubview(collectionView)
-        collectionView.pinToEdges(of: view)
-    }
-    
-    private func fetchTrendingMovies() {
-        Task {
-            showLoadingView()
-            await presenter?.fetchTrendingMovies()
-        }
+        view.addSubview(movieCollectionView)
+        movieCollectionView.pinToEdges(of: view)
     }
     
     private func configureDataSource() {
-        dataSource = UICollectionViewDiffableDataSource<Section, MovieResult>(collectionView: collectionView) { collectionView, indexPath, movie in
+        dataSource = UICollectionViewDiffableDataSource<Section, MovieResult>(collectionView: movieCollectionView) { collectionView, indexPath, movie in
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: MovieCell.reuseID, for: indexPath) as? MovieCell
             cell?.set(movie: movie)
             
@@ -82,39 +85,30 @@ class MoviesViewController: UIViewController, MoviesView {
         }
     }
     
-    override func updateContentUnavailableConfiguration(using state: UIContentUnavailableConfigurationState) {
-        if let movie, !movie.movieResults.isEmpty {
-            contentUnavailableConfiguration = nil
-        } else {
-            var config = UIContentUnavailableConfiguration.empty()
-            config.image = UIImage(systemName: "video.slash.fill")
-            config.text = "No movies"
-            config.secondaryText = "There are no movies. Please try again later."
-            contentUnavailableConfiguration = config
-        }
-    }
-    
-    func update(result: Result<Movie, NetworkingError>) {
-        dismissLoadingView()
-        DispatchQueue.main.async {
-            switch result {
-            case .success(let movie):
-                self.movie = movie
-                self.updateDataSource(movieResult: movie.movieResults)
-                self.setNeedsUpdateContentUnavailableConfiguration()
-                
-            case .failure(_):
-                self.setNeedsUpdateContentUnavailableConfiguration()
-            }
-        }
-    }
-    
     private func updateDataSource(movieResult: [MovieResult]) {
         var snapshot = NSDiffableDataSourceSnapshot<Section, MovieResult>()
         snapshot.appendSections([.main])
-        snapshot.appendItems(movie.movieResults)
+        snapshot.appendItems(movieResult)
         DispatchQueue.main.async { self.dataSource.apply(snapshot, animatingDifferences: true) }
     }
+    
+    private func fetchTrendingMovies() {
+        Task {
+            showLoadingView()
+            await presenter?.fetchTrendingMovies(page: page)
+            dismissLoadingView()
+        }
+    }
+    
+    func updateUI() {
+        DispatchQueue.main.async {
+            self.updateDataSource(movieResult: self.presenter?.movieResults ?? [])
+            self.setNeedsUpdateContentUnavailableConfiguration()
+        }
+    }
+    
+    private var hasTriggeredSecondToLastVisible = false
+    private var page = 1
 }
 
 extension MoviesViewController: UISearchResultsUpdating {
@@ -125,7 +119,36 @@ extension MoviesViewController: UISearchResultsUpdating {
 
 extension MoviesViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        presenter?.showMovieDetail(for: movie.movieResults[indexPath.item])
+        guard let presenter else { return }
+        presenter.showMovieDetail(for: presenter.movieResults[indexPath.item])
+    }
+    
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        guard movieCollectionView.numberOfSections > 0 else { return }
+        // Get the total number of items in section 0.
+        let totalItems = movieCollectionView.numberOfItems(inSection: 0)
+        
+        // Ensure there's at least 2 items, otherwise the second-to-last doesn't exist.
+        guard totalItems > 1 else { return }
+        
+        // Calculate the target indexPath for the second-to-last item.
+        let targetIndexPath = IndexPath(item: totalItems - 1, section: 0)
+        
+        // Check if the target indexPath is among the visible items.
+        
+        if movieCollectionView.indexPathsForVisibleItems.contains(targetIndexPath) {
+            guard !hasTriggeredSecondToLastVisible, page > 0, page <= 500 else {
+                hasTriggeredSecondToLastVisible = false
+                return
+            }
+            
+            page += 1
+            hasTriggeredSecondToLastVisible = true
+            fetchTrendingMovies()
+        } else {
+            // Optionally reset the flag if the target item scrolls offscreen.
+            hasTriggeredSecondToLastVisible = false
+        }
     }
 }
 
