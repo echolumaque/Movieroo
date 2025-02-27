@@ -7,6 +7,7 @@
 
 import UIKit
 import SwiftUI
+import WebKit
 
 protocol MovieDetailView: AnyObject {
     var presenter: MovieDetailPresenter? { get set }
@@ -25,7 +26,9 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
     private let scrollView = UIScrollView()
     private let contentView = UIView()
     
+    private let heroView = UIView()
     private let posterImageView = MovierooImageView()
+    private let trailerView = WKWebView()
     
     private let movieTitle = DynamicLabel(font: UIFont.preferredFont(for: .title1, weight: .bold), numberOfLines: 2)
     
@@ -59,14 +62,13 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
         super.viewDidLoad()
         configureViewController()
         configureScrollView()
-        configurePosterView()
+        configureHeroView()
         configureTitle()
         configureSubtitle()
         configureOverview()
         configureRecommendationsHeader()
         configureRecommendations()
         configureReviews()
-        if Environment.isForPreview { return }
         getMovieDetailAndReview()
     }
     
@@ -78,10 +80,23 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
             })
         }
         
-        // MARK: - Poster
-        Task {
-            posterImageView.image = await NetworkManager.shared.downloadImage(from: "https://image.tmdb.org/t/p/w1280\(wrappedMovieDetail.movieDetail.backdropPath).jpg")
+        // MARK: - Hero
+        let hasYoutubeVideo = wrappedMovieDetail.movieVideo.hasYoutubeVideo
+        let filteredVideos = wrappedMovieDetail.movieVideo.videos.filter { $0.site == "YouTube" && $0.type == "Trailer" }
+        if hasYoutubeVideo && !filteredVideos.isEmpty {
+            if let randomUrl = filteredVideos.randomElement(), let ytVideoUrl = URL(string: "https://www.youtube.com/embed/\(randomUrl.key)") {
+                trailerView.load(URLRequest(url: ytVideoUrl))
+            }
+        } else {
+            Task {
+                posterImageView.contentMode = .scaleAspectFit
+                posterImageView.image = await NetworkManager.shared.downloadImage(from: "https://image.tmdb.org/t/p/w1280\(wrappedMovieDetail.movieDetail.backdropPath).jpg")
+            }
         }
+       
+        heroView.addSubview(hasYoutubeVideo ? trailerView : posterImageView)
+        if hasYoutubeVideo { trailerView.pinToEdges(of: heroView) }
+        else { posterImageView.pinToEdges(of: heroView) }
         
         // MARK: - Title
         movieTitle.text = wrappedMovieDetail.movieDetail.title
@@ -123,28 +138,26 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
         contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor).isActive = true
         
         contentView.addSubviews(
-            posterImageView,
+            heroView,
             movieTitle,
             movieSubtitles,
             overview
         )
     }
     
-    func configurePosterView() {
-        posterImageView.translatesAutoresizingMaskIntoConstraints = false
-        posterImageView.contentMode = .scaleAspectFit
-        
+    func configureHeroView() {
+        heroView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            posterImageView.topAnchor.constraint(equalTo: scrollView.topAnchor),
-            posterImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            posterImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            posterImageView.heightAnchor.constraint(equalTo: posterImageView.widthAnchor, multiplier: 2.0/3.0)
+            heroView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+            heroView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            heroView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            heroView.heightAnchor.constraint(equalTo: heroView.widthAnchor, multiplier: 2.0/3.0)
         ])
     }
     
     func configureTitle() {
         NSLayoutConstraint.activate([
-            movieTitle.topAnchor.constraint(equalTo: posterImageView.bottomAnchor, constant: verticalPadding),
+            movieTitle.topAnchor.constraint(equalTo: heroView.bottomAnchor, constant: verticalPadding),
             movieTitle.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: horizontalPadding),
             movieTitle.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -horizontalPadding),
         ])
@@ -253,8 +266,6 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
         snapshot.appendSections([.main])
         snapshot.appendItems(presenter?.movieRecommendations ?? [])
         recommendationDataSource.apply(snapshot, animatingDifferences: true)
-        
-        print("is invoked")
     }
     
     private func getMovieDetailAndReview() {

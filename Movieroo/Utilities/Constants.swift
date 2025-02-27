@@ -11,6 +11,10 @@ enum Configuration {
     enum Error: Swift.Error {
         case missingKey, invalidValue
     }
+    
+    enum NetworkCall: String {
+        case baseUrl = "https://api.themoviedb.org/3"
+    }
 
     static func value<T>(for key: String) throws -> T where T: LosslessStringConvertible {
         guard let object = Bundle.main.object(forInfoDictionaryKey:key) else {

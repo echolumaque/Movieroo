@@ -20,5 +20,6 @@ class MovierooImageView: UIImageView {
         self.init(frame: .zero)
         image = UIImage(systemName: "popcorn.fill")
         tintColor = .systemPurple
+        translatesAutoresizingMaskIntoConstraints = false
     }
 }
