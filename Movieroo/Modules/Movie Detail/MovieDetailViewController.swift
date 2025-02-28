@@ -315,16 +315,11 @@ extension MovieDetailViewController: UICollectionViewDelegate, HorizontalComposi
     }
 }
 
-extension MovieDetailViewController: UITableViewDelegate, UITableViewDataSource {
+extension MovieDetailViewController: UITableViewDelegate, UITableViewDataSource, ReviewCellDelegate {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        if Environment.isForPreview {
-            return WrappedMovieDetail.test.movieReview.reviews.count
-        } else {
-            
-            guard let presenter, let wrappedMovieDetail = presenter.wrappedMovieDetail else {
-                return 0
-            }
-            
+        if Environment.isForPreview {  return WrappedMovieDetail.test.movieReview.reviews.count }
+        else {
+            guard let presenter, let wrappedMovieDetail = presenter.wrappedMovieDetail else { return 0 }
             return wrappedMovieDetail.movieReview.reviews.count
         }
     }
@@ -335,27 +330,26 @@ extension MovieDetailViewController: UITableViewDelegate, UITableViewDataSource 
             let cell = tableView.dequeueReusableCell(withIdentifier: ReviewCell.reuseID) as! ReviewCell
             let review = reviews[indexPath.row]
             cell.set(review: review)
+            cell.selectionStyle = .none
+            cell.delegate = self
             
             return cell
         } else {
-            guard let presenter, let wrappedMovieDetail = presenter.wrappedMovieDetail else {
-                return UITableViewCell(frame: .zero)
-            }
+            guard let presenter, let wrappedMovieDetail = presenter.wrappedMovieDetail else {  return UITableViewCell(frame: .zero) }
             
             let cell = tableView.dequeueReusableCell(withIdentifier: ReviewCell.reuseID) as! ReviewCell
             let review = wrappedMovieDetail.movieReview.reviews[indexPath.row]
             cell.set(review: review)
+            cell.selectionStyle = .none
+            cell.delegate = self
             
             return cell
         }
     }
     
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        guard let presenter, let wrappedMovieDetail = presenter.wrappedMovieDetail else { return }
-        
-        let reviewUrl = wrappedMovieDetail.movieReview.reviews[indexPath.row].url
-        presentSafariVC(with: URL(string: reviewUrl)!)
-        tableView.deselectRow(at: indexPath, animated: true)
+    func reviewCellDidPerformAction() {
+        reviewTableView.beginUpdates()
+        reviewTableView.endUpdates()
     }
 }
 

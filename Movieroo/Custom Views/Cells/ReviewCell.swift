@@ -8,8 +8,15 @@
 import UIKit
 import SwiftUI
 
+protocol ReviewCellDelegate: AnyObject {
+    func reviewCellDidPerformAction()
+}
+
 class ReviewCell: UITableViewCell {
     static let reuseID = "ReviewCell"
+    var isContentExpanded = false
+    weak var delegate: ReviewCellDelegate?
+    
     private let horizontalPadding: CGFloat = 16
     private let verticalPadding: CGFloat = 8
     
@@ -22,7 +29,12 @@ class ReviewCell: UITableViewCell {
     }
     
     private let reviewDateLabel = DynamicLabel(font: UIFont.preferredFont(for: .callout, weight: .regular), numberOfLines: 1)
-    private let contentLabel = DynamicLabel(font: UIFont.preferredFont(for: .body, weight: .regular))
+    let contentLabel = DynamicLabel(
+        font: UIFont.preferredFont(for: .body, weight: .regular),
+        minimumScaleFactor: 1.0,
+        numberOfLines: 5
+    )
+    private let seeMoreOrLessBtn = UIButton()
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -59,6 +71,7 @@ class ReviewCell: UITableViewCell {
         configureReviewDate()
         configureStarRating()
         configureContent()
+        configureSeeMoreOrLessBtn()
     }
     
     private func configureAvatar() {
@@ -115,13 +128,51 @@ class ReviewCell: UITableViewCell {
     
     private func configureContent() {
         addSubview(contentLabel)
-        
         NSLayoutConstraint.activate([
             contentLabel.topAnchor.constraint(equalTo: authorAvatar.bottomAnchor, constant: verticalPadding),
             contentLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: horizontalPadding),
-            contentLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -horizontalPadding),
-            contentLabel.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -verticalPadding)
+            contentLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -horizontalPadding)
         ])
+    }
+    
+    private func configureSeeMoreOrLessBtn() {
+        addSubview(seeMoreOrLessBtn)
+        seeMoreOrLessBtn.translatesAutoresizingMaskIntoConstraints = false
+        seeMoreOrLessBtn.configuration = .tinted()
+        seeMoreOrLessBtn.configuration?.cornerStyle = .medium
+        seeMoreOrLessBtn.configuration?.baseBackgroundColor = .systemPurple
+        seeMoreOrLessBtn.configuration?.baseForegroundColor = .systemPurple
+        seeMoreOrLessBtn.configuration?.title = "See more review"
+        seeMoreOrLessBtn.addTarget(self, action: #selector(updateContentLabel), for: .touchUpInside)
+        
+        NSLayoutConstraint.activate([
+            seeMoreOrLessBtn.topAnchor.constraint(equalTo: contentLabel.bottomAnchor, constant: verticalPadding),
+            seeMoreOrLessBtn.leadingAnchor.constraint(equalTo: leadingAnchor, constant: horizontalPadding),
+            seeMoreOrLessBtn.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -horizontalPadding),
+            seeMoreOrLessBtn.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -verticalPadding)
+        ])
+    }
+    
+    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        // Convert the point to the button's coordinate system
+        let buttonPoint = seeMoreOrLessBtn.convert(point, from: self)
+        
+        // If the point is within the button, return the button
+        if seeMoreOrLessBtn.bounds.contains(buttonPoint) {
+            return seeMoreOrLessBtn
+        }
+        
+        // Otherwise, default to the standard hit testing
+        return super.hitTest(point, with: event)
+    }
+    
+    @objc func updateContentLabel() {
+        isContentExpanded.toggle()
+        contentLabel.numberOfLines = isContentExpanded ? 0 : 5
+        contentLabel.lineBreakMode = isContentExpanded ? .byWordWrapping : .byTruncatingTail
+        seeMoreOrLessBtn.configuration?.title = "See \(isContentExpanded ? "less" : "more") review"
+        
+        delegate?.reviewCellDidPerformAction()
     }
 }
 
