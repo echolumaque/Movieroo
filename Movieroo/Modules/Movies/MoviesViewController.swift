@@ -13,6 +13,7 @@ protocol MoviesView: AnyObject {
 }
 
 class MoviesViewController: UIViewController, MoviesView {
+    var isSearching = false
     var movieCollectionView: UICollectionView!
     var dataSource: UICollectionViewDiffableDataSource<Section, MovieResult>!
     
@@ -26,29 +27,60 @@ class MoviesViewController: UIViewController, MoviesView {
         configureSearchController()
         configureCollectionView()
         fetchTrendingMovies()
-        configureDataSource()
     }
     
     override func updateContentUnavailableConfiguration(using state: UIContentUnavailableConfigurationState) {
-        if let movieResults = presenter?.movieResults, !movieResults.isEmpty {
+        guard let presenter else {
             contentUnavailableConfiguration = nil
-        } else {
+            return
+        }
+        
+        if presenter.movieResults.isEmpty {
             var config = UIContentUnavailableConfiguration.empty()
             config.image = UIImage(systemName: "video.slash.fill")
             config.text = "No movies"
             config.secondaryText = "There are no movies. Please try again later."
             contentUnavailableConfiguration = config
+        } else if isSearching && presenter.filteredMovieResults.isEmpty {
+            contentUnavailableConfiguration = UIContentUnavailableConfiguration.search()
+        } else {
+            contentUnavailableConfiguration = nil
         }
     }
     
+    private var navVC: UINavigationController?
+    
     private func configureViewController() {
         view.backgroundColor = .systemBackground
+        navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "plus"), primaryAction: UIAction { [weak self] _ in
+            
+            guard let navVC = self?.navVC else {
+                let vc = SelectGenresSheet { test in
+                    print("hey")
+                }
+                let newNavVC = UINavigationController(rootViewController: vc)
+                newNavVC.sheetPresentationController?.configureMediumSheet()
+                
+                let appearance = UINavigationBarAppearance()
+                appearance.configureWithOpaqueBackground()
+                appearance.backgroundColor = .systemBackground
+                newNavVC.navigationBar.standardAppearance = appearance
+                newNavVC.navigationBar.scrollEdgeAppearance = appearance
+                
+                self?.present(newNavVC, animated: true)
+                self?.navVC = newNavVC
+                return
+            }
+            
+            navVC.sheetPresentationController?.configureMediumSheet()
+            self?.present(navVC, animated: true)
+        })
     }
     
     private func configureSearchController() {
         let searchController = UISearchController()
         searchController.searchResultsUpdater = self
-        searchController.searchBar.placeholder = "Search for a category"
+        searchController.searchBar.placeholder = "Search for a movie"
         navigationItem.searchController = searchController
         navigationItem.hidesSearchBarWhenScrolling = false
     }
@@ -65,18 +97,14 @@ class MoviesViewController: UIViewController, MoviesView {
         )
         
         movieCollectionView.delegate = self
-        movieCollectionView.register(MovieCell.self, forCellWithReuseIdentifier: MovieCell.reuseID)
-        
         view.addSubview(movieCollectionView)
         movieCollectionView.pinToEdges(of: view)
-    }
-    
-    private func configureDataSource() {
+        
+        let movieCell = UICollectionView.CellRegistration<MovieCell, MovieResult> { cell, indexPath, movie in
+            cell.set(movie: movie)
+        }
         dataSource = UICollectionViewDiffableDataSource<Section, MovieResult>(collectionView: movieCollectionView) { collectionView, indexPath, movie in
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: MovieCell.reuseID, for: indexPath) as? MovieCell
-            cell?.set(movie: movie)
-            
-            return cell
+            return collectionView.dequeueConfiguredReusableCell(using: movieCell, for: indexPath, item: movie)
         }
     }
     
@@ -105,7 +133,18 @@ class MoviesViewController: UIViewController, MoviesView {
 
 extension MoviesViewController: UISearchResultsUpdating {
     func updateSearchResults(for searchController: UISearchController) {
+        guard let presenter else { return }
+        guard let filter = searchController.searchBar.text, !filter.isEmpty else {
+            isSearching = false
+            presenter.filteredMovieResults.removeAll()
+            updateDataSource(movieResult: presenter.movieResults)
+            return
+        }
         
+        isSearching = true
+        presenter.filteredMovieResults = presenter.movieResults.filter { $0.title.containsInsensitive(filter) }
+        updateDataSource(movieResult: presenter.filteredMovieResults)
+        setNeedsUpdateContentUnavailableConfiguration()
     }
 }
 
@@ -116,7 +155,7 @@ extension MoviesViewController: UICollectionViewDelegate {
     }
     
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        guard let presenter else { return }
+        guard let presenter, !isSearching else { return }
         guard movieCollectionView.numberOfSections > 0 else { return }
         let totalItems = movieCollectionView.numberOfItems(inSection: 0)
         guard totalItems > 1 else { return }

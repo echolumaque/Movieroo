@@ -75,7 +75,7 @@ class ReviewCell: UITableViewCell {
     }
     
     private func configureAvatar() {
-        addSubview(authorAvatar)
+        contentView.addSubview(authorAvatar)
         authorAvatar.translatesAutoresizingMaskIntoConstraints = false
         authorAvatar.clipsToBounds = true
         authorAvatar.layer.cornerRadius = 45 / 2
@@ -85,8 +85,8 @@ class ReviewCell: UITableViewCell {
         authorAvatar.tintColor = .systemPurple
         
         NSLayoutConstraint.activate([
-            authorAvatar.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor, constant: verticalPadding),
-            authorAvatar.leadingAnchor.constraint(equalTo: leadingAnchor),
+            authorAvatar.topAnchor.constraint(equalTo: contentView.safeAreaLayoutGuide.topAnchor, constant: verticalPadding),
+            authorAvatar.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             authorAvatar.widthAnchor.constraint(equalToConstant: 45),
             authorAvatar.heightAnchor.constraint(equalToConstant: 45)
             
@@ -94,49 +94,49 @@ class ReviewCell: UITableViewCell {
     }
     
     private func configureAuthorName() {
-        addSubview(authorNameLabel)
+        contentView.addSubview(authorNameLabel)
         
         NSLayoutConstraint.activate([
             authorNameLabel.topAnchor.constraint(equalTo: authorAvatar.topAnchor),
             authorNameLabel.leadingAnchor.constraint(equalTo: authorAvatar.trailingAnchor, constant: horizontalPadding),
-            authorNameLabel.trailingAnchor.constraint(equalTo: trailingAnchor)
+            authorNameLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor)
             
         ])
     }
     
     private func configureReviewDate() {
-        addSubview(reviewDateLabel)
+        contentView.addSubview(reviewDateLabel)
         
         NSLayoutConstraint.activate([
             reviewDateLabel.topAnchor.constraint(equalTo: authorNameLabel.bottomAnchor),
             reviewDateLabel.leadingAnchor.constraint(equalTo: authorAvatar.trailingAnchor, constant: horizontalPadding),
-            reviewDateLabel.trailingAnchor.constraint(equalTo: trailingAnchor)
+            reviewDateLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor)
         ])
     }
     
     private func configureStarRating() {
         let hostedStarsView = UIHostingController(rootView: starsView)
-        addSubview(hostedStarsView.view)
+        contentView.addSubview(hostedStarsView.view)
         hostedStarsView.view.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
             hostedStarsView.view.centerYAnchor.constraint(equalTo: authorNameLabel.centerYAnchor),
-            hostedStarsView.view.trailingAnchor.constraint(equalTo: trailingAnchor),
+            hostedStarsView.view.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             
         ])
     }
     
     private func configureContent() {
-        addSubview(contentLabel)
+        contentView.addSubview(contentLabel)
         NSLayoutConstraint.activate([
             contentLabel.topAnchor.constraint(equalTo: authorAvatar.bottomAnchor, constant: verticalPadding),
-            contentLabel.leadingAnchor.constraint(equalTo: leadingAnchor),
-            contentLabel.trailingAnchor.constraint(equalTo: trailingAnchor)
+            contentLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            contentLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor)
         ])
     }
     
     private func configureSeeMoreOrLessBtn() {
-        addSubview(seeMoreOrLessBtn)
+        contentView.addSubview(seeMoreOrLessBtn)
         seeMoreOrLessBtn.translatesAutoresizingMaskIntoConstraints = false
         seeMoreOrLessBtn.configuration = .tinted()
         seeMoreOrLessBtn.configuration?.cornerStyle = .medium
@@ -147,8 +147,8 @@ class ReviewCell: UITableViewCell {
         
         NSLayoutConstraint.activate([
             seeMoreOrLessBtn.topAnchor.constraint(equalTo: contentLabel.bottomAnchor, constant: verticalPadding + 4),
-            seeMoreOrLessBtn.trailingAnchor.constraint(equalTo: trailingAnchor),
-            seeMoreOrLessBtn.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -(verticalPadding + 4))
+            seeMoreOrLessBtn.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            seeMoreOrLessBtn.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -(verticalPadding + 4))
         ])
     }
     

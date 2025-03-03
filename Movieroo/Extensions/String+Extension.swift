@@ -41,6 +41,10 @@ extension String {
         return ""
     }
     
+    func containsInsensitive(_ searchString: String) -> Bool {
+        range(of: searchString, options: [.caseInsensitive, .diacriticInsensitive]) != nil
+    }
+    
     func htmlAttributedString(size: CGFloat, color: UIColor) -> NSAttributedString? {
         let htmlTemplate = """
         <!doctype html>

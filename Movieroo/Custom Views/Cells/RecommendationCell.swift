@@ -57,11 +57,11 @@ class RecommendationCell: UICollectionViewCell {
         let starsView = UIHostingController(rootView: starsView)
         starsView.view.translatesAutoresizingMaskIntoConstraints = false
         
-        addSubviews(posterView, titleLabel, starsView.view, ratingLabel)
+        contentView.addSubviews(posterView, titleLabel, starsView.view, ratingLabel)
         NSLayoutConstraint.activate([
-            posterView.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor),
-            posterView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            posterView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            posterView.topAnchor.constraint(equalTo: contentView.safeAreaLayoutGuide.topAnchor),
+            posterView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            posterView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             posterView.widthAnchor.constraint(equalToConstant: 154),
             posterView.heightAnchor.constraint(equalTo: posterView.widthAnchor, multiplier: 3.0 / 2.0),
             

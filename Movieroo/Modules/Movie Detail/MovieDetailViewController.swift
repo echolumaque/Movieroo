@@ -337,11 +337,11 @@ extension MovieDetailViewController: UICollectionViewDelegate, HorizontalComposi
 extension MovieDetailViewController: UITableViewDelegate, ReviewCellDelegate {
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let seeMoreReviewsBtn = UIButton()
-        seeMoreReviewsBtn.configuration = .tinted()
+        seeMoreReviewsBtn.configuration = .filled()
         seeMoreReviewsBtn.configuration?.cornerStyle = .medium
         seeMoreReviewsBtn.configuration?.baseBackgroundColor = .systemPurple
-        seeMoreReviewsBtn.configuration?.baseForegroundColor = .systemPurple
-        seeMoreReviewsBtn.configuration?.title = "See more"
+        seeMoreReviewsBtn.configuration?.baseForegroundColor = .white
+        seeMoreReviewsBtn.configuration?.title = "See more reviews"
         seeMoreReviewsBtn.addTarget(self, action: #selector(getMoreReviews), for: .touchUpInside)
         
         return seeMoreReviewsBtn

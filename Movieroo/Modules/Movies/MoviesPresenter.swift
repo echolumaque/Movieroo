@@ -15,6 +15,7 @@ protocol MoviesPresenter: AnyObject {
     var page: Int { get set }
     var hasTriggeredSecondToLastVisible: Bool { get set }
     var movieResults: [MovieResult] { get set }
+    var filteredMovieResults: [MovieResult] { get set }
     
     func fetchTrendingMovies(page: Int) async
     func didFetchedMovies(result: Result<Movie, NetworkingError>)
@@ -29,6 +30,7 @@ class MoviesPresenterImpl: MoviesPresenter {
     var page: Int = 1
     var hasTriggeredSecondToLastVisible: Bool = false
     var movieResults: [MovieResult] = []
+    var filteredMovieResults: [MovieResult] = []
     
     func fetchTrendingMovies(page: Int) async {
         await interactor?.getTrendingMovies(page: page)

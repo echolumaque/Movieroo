@@ -71,42 +71,42 @@ class MovieCell: UICollectionViewCell {
     }
     
     private func configureMoviePoster() {
-        addSubview(moviePoster)
+        contentView.addSubview(moviePoster)
         moviePoster.translatesAutoresizingMaskIntoConstraints = false
         moviePoster.layer.cornerRadius = 4
         moviePoster.clipsToBounds = true
         
         NSLayoutConstraint.activate([
-            moviePoster.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor, constant: verticalPadding),
-            moviePoster.leadingAnchor.constraint(equalTo: leadingAnchor, constant: horizontalPadding),
+            moviePoster.topAnchor.constraint(equalTo: contentView.safeAreaLayoutGuide.topAnchor, constant: verticalPadding),
+            moviePoster.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: horizontalPadding),
             moviePoster.widthAnchor.constraint(equalToConstant: 92)
         ])
     }
     
     private func configureTitle() {
-        addSubview(titleLabel)
+        contentView.addSubview(titleLabel)
         titleLabel.lineBreakMode = .byTruncatingTail
         
         NSLayoutConstraint.activate([
-            titleLabel.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor),
+            titleLabel.topAnchor.constraint(equalTo: contentView.safeAreaLayoutGuide.topAnchor),
             titleLabel.leadingAnchor.constraint(equalTo: moviePoster.trailingAnchor, constant: horizontalPadding),
-            titleLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -horizontalPadding)
+            titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -horizontalPadding)
         ])
     }
     
     private func configureOverviewLabel() {
-        addSubview(overviewLabel)
+        contentView.addSubview(overviewLabel)
         overviewLabel.lineBreakMode = .byTruncatingTail
         
         NSLayoutConstraint.activate([
             overviewLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: verticalPadding),
             overviewLabel.leadingAnchor.constraint(equalTo: moviePoster.trailingAnchor, constant: horizontalPadding),
-            overviewLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -horizontalPadding),
+            overviewLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -horizontalPadding),
         ])
     }
     
     private func configureMiscInfoView() {
-        addSubview(miscInfoView)
+        contentView.addSubview(miscInfoView)
         miscInfoView.axis = .horizontal
         miscInfoView.distribution = .equalSpacing
         miscInfoView.translatesAutoresizingMaskIntoConstraints = false
@@ -117,9 +117,9 @@ class MovieCell: UICollectionViewCell {
         NSLayoutConstraint.activate([
             miscInfoView.topAnchor.constraint(greaterThanOrEqualTo: overviewLabel.bottomAnchor, constant: verticalPadding),
             miscInfoView.topAnchor.constraint(greaterThanOrEqualTo: moviePoster.bottomAnchor, constant: verticalPadding),
-            miscInfoView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: horizontalPadding),
-            miscInfoView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -horizontalPadding),
-            miscInfoView.bottomAnchor.constraint(equalTo: bottomAnchor)
+            miscInfoView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: horizontalPadding),
+            miscInfoView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -horizontalPadding),
+            miscInfoView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
         ])
     }
     
@@ -130,7 +130,6 @@ class MovieCell: UICollectionViewCell {
 
         releaseDateIcon.translatesAutoresizingMaskIntoConstraints = false
         releaseDateIcon.tintColor = .secondaryLabel
-        
 
         NSLayoutConstraint.activate([
             releaseDateIcon.widthAnchor.constraint(equalToConstant: 20),

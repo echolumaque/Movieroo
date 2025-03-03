@@ -40,7 +40,7 @@ class MainTabRouterImpl: MainTabRouter {
         let moviesModule = MoviesRouterImpl.start()
         let moviesVC = moviesModule.view
         moviesVC?.tabBarItem = UITabBarItem(title: "Movies", image: UIImage(systemName: "popcorn.fill"), tag: 0)
-        moviesVC?.title = "Movieroo"
+        moviesVC?.navigationItem.title = "Movieroo"
         
         return UINavigationController(rootViewController: moviesVC ?? UIViewController())
     }
