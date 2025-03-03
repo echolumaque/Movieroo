@@ -11,6 +11,7 @@ protocol MovieDetailInteractor: AnyObject {
     var presenter: MovieDetailPresenter? { get set }
     func fetchMovieDetails(for id: Int) async throws(NetworkingError) -> WrappedMovieDetail
     func fetchMovieRecommendations(for id: Int, page: Int) async throws(NetworkingError) -> Movie
+    func fetchMovieReviews(for id: Int, page: Int) async throws(NetworkingError) -> MovieReview
 }
 
 class MovieDetailInteractorImpl: MovieDetailInteractor {
@@ -19,11 +20,10 @@ class MovieDetailInteractorImpl: MovieDetailInteractor {
     func fetchMovieDetails(for id: Int) async throws(NetworkingError) -> WrappedMovieDetail {
         do {
             let movieDetailUrl = "\(Configuration.NetworkCall.baseUrl.rawValue)/movie/\(id)?language=en-US"
-            let movieReviewUrl = "\(Configuration.NetworkCall.baseUrl.rawValue)/movie/\(id)/reviews?language=en-US&page=1"
             let movieCertificationUrl = "\(Configuration.NetworkCall.baseUrl.rawValue)/movie/\(id)/release_dates"
             
             async let fetchedMovieDetail: MovieDetail = try NetworkManager.shared.baseNetworkCall(for: movieDetailUrl)
-            async let fetchedMovieReview: MovieReview = try NetworkManager.shared.baseNetworkCall(for: movieReviewUrl)
+            async let fetchedMovieReview: MovieReview = try fetchMovieReviews(for: id, page: 1)
             async let fetchedMovieCertification: MovieCertification = try NetworkManager.shared.baseNetworkCall(for: movieCertificationUrl)
             async let fetchedMovieRecommendations: Movie = try fetchMovieRecommendations(for: id, page: 1)
             async let fetchedMovieVideo: MovieVideo = try NetworkManager.shared.baseNetworkCall(for: "\(Configuration.NetworkCall.baseUrl.rawValue)/movie/\(id)/videos?language=en-US")
@@ -63,6 +63,13 @@ class MovieDetailInteractorImpl: MovieDetailInteractor {
     func fetchMovieRecommendations(for id: Int, page: Int) async throws(NetworkingError) -> Movie {
         let movieRecommendationsUrl = "\(Configuration.NetworkCall.baseUrl.rawValue)/movie/\(id)/recommendations?language=en-US&page=\(page)"
         let fetchedMovieReview: Movie = try await NetworkManager.shared.baseNetworkCall(for: movieRecommendationsUrl)
+        
+        return fetchedMovieReview
+    }
+    
+    func fetchMovieReviews(for id: Int, page: Int) async throws(NetworkingError) -> MovieReview {
+        let movieReviewsUrl = "\(Configuration.NetworkCall.baseUrl.rawValue)/movie/\(id)/reviews?language=en-US&page=\(page)"
+        let fetchedMovieReview: MovieReview = try await NetworkManager.shared.baseNetworkCall(for: movieReviewsUrl)
         
         return fetchedMovieReview
     }

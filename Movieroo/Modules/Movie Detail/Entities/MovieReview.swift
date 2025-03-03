@@ -20,7 +20,7 @@ struct MovieReview: Codable {
     }
 }
 
-struct Review: Codable {
+struct Review: Codable, Equatable, Hashable {
     let author: String
     let authorDetails: AuthorDetails?
     let content, createdAt, id, updatedAt: String
@@ -35,6 +35,9 @@ struct Review: Codable {
         case updatedAt = "updated_at"
         case url
     }
+    
+    static func ==(lhs: Review, rhs: Review) -> Bool { lhs.id == rhs.id }
+    func hash(into hasher: inout Hasher) { hasher.combine(id) }
 }
 
 struct AuthorDetails: Codable {

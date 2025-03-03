@@ -13,6 +13,7 @@ protocol MovieDetailView: AnyObject {
     var presenter: MovieDetailPresenter? { get set }
     func updateMovieDetails(_ result: Result<WrappedMovieDetail, NetworkingError>)
     func updateRecommendationDataSource()
+    func updateReviewDataSource()
 }
 
 class MovieDetailViewController: UIViewController, MovieDetailView {
@@ -47,7 +48,9 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
     private var recommendationCollectionView: HorizontalCompositionalUICollectionView!
     private var recommendationDataSource: UICollectionViewDiffableDataSource<Section, MovieResult>!
     private let collectionViewDivider = Divider()
+    
     private let reviewTableView = DynamicTableView()
+    private var reviewDataSource: UITableViewDiffableDataSource<Section, Review>!
     
     init(movieId: Int) {
         super.init(nibName: nil, bundle: nil)
@@ -214,7 +217,6 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
         )
         recommendationCollectionView.delegate = self
         recommendationCollectionView.translatesAutoresizingMaskIntoConstraints = false
-        recommendationCollectionView.register(RecommendationCell.self, forCellWithReuseIdentifier: RecommendationCell.reuseID)
         
         contentView.addSubviews(recommendationCollectionView, collectionViewDivider)
         NSLayoutConstraint.activate([
@@ -229,7 +231,13 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
             collectionViewDivider.heightAnchor.constraint(equalToConstant: 0.5)
         ])
         
-        configureRecommendationDataSource()
+        let recommendationCell = UICollectionView.CellRegistration<RecommendationCell, MovieResult> { cell, indexPath, movieResult in
+            cell.set(movieResult: movieResult)
+        }
+        
+        recommendationDataSource = UICollectionViewDiffableDataSource(collectionView: recommendationCollectionView) { collectionView, indexPath, movieResult in
+            return collectionView.dequeueConfiguredReusableCell(using: recommendationCell, for: indexPath, item: movieResult)
+        }
     }
     
     func configureReviews() {
@@ -238,24 +246,22 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
         reviewTableView.estimatedRowHeight = 80
         reviewTableView.rowHeight = UITableView.automaticDimension
         reviewTableView.delegate = self
-        reviewTableView.dataSource = self
         reviewTableView.tableFooterView = UIView(frame: .zero)
         reviewTableView.register(ReviewCell.self, forCellReuseIdentifier: ReviewCell.reuseID)
         reviewTableView.isScrollEnabled = false
 
         NSLayoutConstraint.activate([
             reviewTableView.topAnchor.constraint(equalTo: collectionViewDivider.bottomAnchor, constant: verticalPadding),
-            reviewTableView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            reviewTableView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            reviewTableView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: horizontalPadding),
+            reviewTableView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -horizontalPadding),
             reviewTableView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor, constant: -verticalPadding)
         ])
-    }
-    
-    private func configureRecommendationDataSource() {
-        recommendationDataSource = UICollectionViewDiffableDataSource<Section, MovieResult>(collectionView: recommendationCollectionView) { collectionView, indexPath, movieResult in
-            
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: RecommendationCell.reuseID, for: indexPath) as? RecommendationCell
-            cell?.set(movieResult: movieResult)
+        
+        reviewDataSource = UITableViewDiffableDataSource(tableView: reviewTableView) { tableView, indexPath, review in
+            let cell = tableView.dequeueReusableCell(withIdentifier: ReviewCell.reuseID, for: indexPath) as? ReviewCell
+            cell?.set(review: review)
+            cell?.selectionStyle = .none
+            cell?.delegate = self
             
             return cell
         }
@@ -268,6 +274,13 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
         recommendationDataSource.apply(snapshot, animatingDifferences: true)
     }
     
+    func updateReviewDataSource() {
+        var snapshot = NSDiffableDataSourceSnapshot<Section, Review>()
+        snapshot.appendSections([.main])
+        snapshot.appendItems(presenter?.movieReviews ?? [])
+        reviewDataSource.apply(snapshot, animatingDifferences: true)
+    }
+    
     private func getMovieDetailAndReview() {
         Task { try await presenter?.fetchMovieDetails(for: movieId) }
     }
@@ -278,11 +291,17 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
             DispatchQueue.main.async {
                 self.set(wrappedMovieDetail: wrappedMovieDetail)
                 self.updateRecommendationDataSource()
+                self.updateReviewDataSource()
             }
             
         case .failure(let failure):
             print("Network error: \(failure)")
         }
+    }
+    
+    @objc private func getMoreReviews() {
+        presenter?.reviewsPage += 1
+        Task { try await presenter?.fetchMovieReviews(for: movieId) }
     }
 }
 
@@ -295,14 +314,14 @@ extension MovieDetailViewController: UICollectionViewDelegate, HorizontalComposi
         
         let targetIndexPath = IndexPath(item: totalItems - 1, section: 0)
         if recommendationCollectionView.indexPathsForVisibleItems.contains(targetIndexPath) {
-            guard !presenter.hasTriggeredLastVisible, presenter.page > 0, presenter.page <= 500 else {
+            guard !presenter.hasTriggeredLastVisible, presenter.recommendationsPage > 0, presenter.recommendationsPage <= 500 else {
                 presenter.hasTriggeredLastVisible = false
                 return
             }
             
-            presenter.page += 1
+            presenter.recommendationsPage += 1
             presenter.hasTriggeredLastVisible = true
-            Task { try await presenter.fetchMovieRecommendations(for: movieId, page: presenter.page) }
+            Task { try await presenter.fetchMovieRecommendations(for: movieId) }
         } else {
             presenter.hasTriggeredLastVisible = false
         }
@@ -315,36 +334,17 @@ extension MovieDetailViewController: UICollectionViewDelegate, HorizontalComposi
     }
 }
 
-extension MovieDetailViewController: UITableViewDelegate, UITableViewDataSource, ReviewCellDelegate {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        if Environment.isForPreview {  return WrappedMovieDetail.test.movieReview.reviews.count }
-        else {
-            guard let presenter, let wrappedMovieDetail = presenter.wrappedMovieDetail else { return 0 }
-            return wrappedMovieDetail.movieReview.reviews.count
-        }
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        if Environment.isForPreview {
-            let reviews = WrappedMovieDetail.test.movieReview.reviews
-            let cell = tableView.dequeueReusableCell(withIdentifier: ReviewCell.reuseID) as! ReviewCell
-            let review = reviews[indexPath.row]
-            cell.set(review: review)
-            cell.selectionStyle = .none
-            cell.delegate = self
-            
-            return cell
-        } else {
-            guard let presenter, let wrappedMovieDetail = presenter.wrappedMovieDetail else {  return UITableViewCell(frame: .zero) }
-            
-            let cell = tableView.dequeueReusableCell(withIdentifier: ReviewCell.reuseID) as! ReviewCell
-            let review = wrappedMovieDetail.movieReview.reviews[indexPath.row]
-            cell.set(review: review)
-            cell.selectionStyle = .none
-            cell.delegate = self
-            
-            return cell
-        }
+extension MovieDetailViewController: UITableViewDelegate, ReviewCellDelegate {
+    func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+        let seeMoreReviewsBtn = UIButton()
+        seeMoreReviewsBtn.configuration = .tinted()
+        seeMoreReviewsBtn.configuration?.cornerStyle = .medium
+        seeMoreReviewsBtn.configuration?.baseBackgroundColor = .systemPurple
+        seeMoreReviewsBtn.configuration?.baseForegroundColor = .systemPurple
+        seeMoreReviewsBtn.configuration?.title = "See more"
+        seeMoreReviewsBtn.addTarget(self, action: #selector(getMoreReviews), for: .touchUpInside)
+        
+        return seeMoreReviewsBtn
     }
     
     func reviewCellDidPerformAction() {

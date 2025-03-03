@@ -86,7 +86,7 @@ class ReviewCell: UITableViewCell {
         
         NSLayoutConstraint.activate([
             authorAvatar.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor, constant: verticalPadding),
-            authorAvatar.leadingAnchor.constraint(equalTo: leadingAnchor, constant: horizontalPadding),
+            authorAvatar.leadingAnchor.constraint(equalTo: leadingAnchor),
             authorAvatar.widthAnchor.constraint(equalToConstant: 45),
             authorAvatar.heightAnchor.constraint(equalToConstant: 45)
             
@@ -110,7 +110,7 @@ class ReviewCell: UITableViewCell {
         NSLayoutConstraint.activate([
             reviewDateLabel.topAnchor.constraint(equalTo: authorNameLabel.bottomAnchor),
             reviewDateLabel.leadingAnchor.constraint(equalTo: authorAvatar.trailingAnchor, constant: horizontalPadding),
-            reviewDateLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -horizontalPadding)
+            reviewDateLabel.trailingAnchor.constraint(equalTo: trailingAnchor)
         ])
     }
     
@@ -121,7 +121,7 @@ class ReviewCell: UITableViewCell {
         
         NSLayoutConstraint.activate([
             hostedStarsView.view.centerYAnchor.constraint(equalTo: authorNameLabel.centerYAnchor),
-            hostedStarsView.view.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -horizontalPadding),
+            hostedStarsView.view.trailingAnchor.constraint(equalTo: trailingAnchor),
             
         ])
     }
@@ -130,8 +130,8 @@ class ReviewCell: UITableViewCell {
         addSubview(contentLabel)
         NSLayoutConstraint.activate([
             contentLabel.topAnchor.constraint(equalTo: authorAvatar.bottomAnchor, constant: verticalPadding),
-            contentLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: horizontalPadding),
-            contentLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -horizontalPadding)
+            contentLabel.leadingAnchor.constraint(equalTo: leadingAnchor),
+            contentLabel.trailingAnchor.constraint(equalTo: trailingAnchor)
         ])
     }
     
@@ -142,14 +142,13 @@ class ReviewCell: UITableViewCell {
         seeMoreOrLessBtn.configuration?.cornerStyle = .medium
         seeMoreOrLessBtn.configuration?.baseBackgroundColor = .systemPurple
         seeMoreOrLessBtn.configuration?.baseForegroundColor = .systemPurple
-        seeMoreOrLessBtn.configuration?.title = "See more review"
+        seeMoreOrLessBtn.configuration?.title = "See more"
         seeMoreOrLessBtn.addTarget(self, action: #selector(updateContentLabel), for: .touchUpInside)
         
         NSLayoutConstraint.activate([
-            seeMoreOrLessBtn.topAnchor.constraint(equalTo: contentLabel.bottomAnchor, constant: verticalPadding),
-            seeMoreOrLessBtn.leadingAnchor.constraint(equalTo: leadingAnchor, constant: horizontalPadding),
-            seeMoreOrLessBtn.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -horizontalPadding),
-            seeMoreOrLessBtn.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -verticalPadding)
+            seeMoreOrLessBtn.topAnchor.constraint(equalTo: contentLabel.bottomAnchor, constant: verticalPadding + 4),
+            seeMoreOrLessBtn.trailingAnchor.constraint(equalTo: trailingAnchor),
+            seeMoreOrLessBtn.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -(verticalPadding + 4))
         ])
     }
     
@@ -170,7 +169,7 @@ class ReviewCell: UITableViewCell {
         isContentExpanded.toggle()
         contentLabel.numberOfLines = isContentExpanded ? 0 : 5
         contentLabel.lineBreakMode = isContentExpanded ? .byWordWrapping : .byTruncatingTail
-        seeMoreOrLessBtn.configuration?.title = "See \(isContentExpanded ? "less" : "more") review"
+        seeMoreOrLessBtn.configuration?.title = "See \(isContentExpanded ? "less" : "more")"
         
         delegate?.reviewCellDidPerformAction()
     }
