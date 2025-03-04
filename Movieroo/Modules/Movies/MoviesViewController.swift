@@ -9,20 +9,19 @@ import UIKit
 
 protocol MoviesView: AnyObject {
     var presenter: MoviesPresenter? { get set }
-    func updateUI()
+    func updateDataSource(movieResult: [MovieResult])
+    var isSearching: Bool { get set }
 }
 
 class MoviesViewController: UIViewController, MoviesView {
+    var presenter: MoviesPresenter?
     var isSearching = false
     var movieCollectionView: UICollectionView!
     var dataSource: UICollectionViewDiffableDataSource<Section, MovieResult>!
     
-    var presenter: MoviesPresenter?
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        navigationController?.navigationBar.prefersLargeTitles = true
         configureViewController()
         configureSearchController()
         configureCollectionView()
@@ -48,38 +47,18 @@ class MoviesViewController: UIViewController, MoviesView {
         }
     }
     
-    private var navVC: UINavigationController?
-    
     private func configureViewController() {
         view.backgroundColor = .systemBackground
         navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "plus"), primaryAction: UIAction { [weak self] _ in
-            
-            guard let navVC = self?.navVC else {
-                let vc = SelectGenresSheet { test in
-                    print("hey")
-                }
-                let newNavVC = UINavigationController(rootViewController: vc)
-                newNavVC.sheetPresentationController?.configureMediumSheet()
-                
-                let appearance = UINavigationBarAppearance()
-                appearance.configureWithOpaqueBackground()
-                appearance.backgroundColor = .systemBackground
-                newNavVC.navigationBar.standardAppearance = appearance
-                newNavVC.navigationBar.scrollEdgeAppearance = appearance
-                
-                self?.present(newNavVC, animated: true)
-                self?.navVC = newNavVC
-                return
-            }
-            
-            navVC.sheetPresentationController?.configureMediumSheet()
-            self?.present(navVC, animated: true)
+            guard let self else { return }
+            presenter?.showGenreSheet()
         })
     }
     
     private func configureSearchController() {
         let searchController = UISearchController()
         searchController.searchResultsUpdater = self
+        searchController.hidesNavigationBarDuringPresentation = false
         searchController.searchBar.placeholder = "Search for a movie"
         navigationItem.searchController = searchController
         navigationItem.hidesSearchBarWhenScrolling = false
@@ -108,11 +87,15 @@ class MoviesViewController: UIViewController, MoviesView {
         }
     }
     
-    private func updateDataSource(movieResult: [MovieResult]) {
+    func updateDataSource(movieResult: [MovieResult]) {
         var snapshot = NSDiffableDataSourceSnapshot<Section, MovieResult>()
         snapshot.appendSections([.main])
         snapshot.appendItems(movieResult)
-        DispatchQueue.main.async { self.dataSource.apply(snapshot, animatingDifferences: true) }
+        DispatchQueue.main.async {
+            self.dataSource.apply(snapshot, animatingDifferences: true)
+            self.setNeedsUpdateContentUnavailableConfiguration()
+        }
+        
     }
     
     private func fetchTrendingMovies() {
@@ -121,13 +104,6 @@ class MoviesViewController: UIViewController, MoviesView {
         showLoadingView()
         Task { await presenter.fetchTrendingMovies(page: presenter.page) }
         dismissLoadingView()
-    }
-    
-    func updateUI() {
-        DispatchQueue.main.async {
-            self.updateDataSource(movieResult: self.presenter?.movieResults ?? [])
-            self.setNeedsUpdateContentUnavailableConfiguration()
-        }
     }
 }
 

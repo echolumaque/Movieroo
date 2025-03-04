@@ -7,10 +7,20 @@
 
 import UIKit
 
+protocol SelectGenresDelegate: AnyObject {
+    func onGenreSelected(genreInfo: (genre: GenreToggle, isEnabled: Bool))
+}
+
+protocol SelectGenresDataSource: AnyObject {
+    var genreInfos: [GenreToggle] { get set }
+}
+
 class SelectGenresSheet: UIViewController {
     private var toggleChanged: ((Bool) -> Void)?
     private let genresTableView = DynamicTableView()
-    private var dataSource: UITableViewDiffableDataSource<Section, GenreToggle>!
+    
+    weak var delegate: SelectGenresDelegate?
+    weak var genreInfosDataSource: SelectGenresDataSource?
     
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
         super.init(nibName: nil, bundle: nil)
@@ -23,6 +33,11 @@ class SelectGenresSheet: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        title = "Select visible genres"
+        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Done", primaryAction: UIAction { [weak self] _ in
+            self?.dismiss(animated: true)
+        })
         configure()
     }
     
@@ -31,7 +46,6 @@ class SelectGenresSheet: UIViewController {
     }
     
     func configure() {
-        title = "Select visible genres"
         genresTableView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(genresTableView)
         NSLayoutConstraint.activate([
@@ -41,49 +55,32 @@ class SelectGenresSheet: UIViewController {
             genresTableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
         ])
         
+        genresTableView.dataSource = self
         genresTableView.estimatedRowHeight = 80
         genresTableView.rowHeight = UITableView.automaticDimension
         genresTableView.tableFooterView = UIView(frame: .zero)
         genresTableView.register(GenreCell.self, forCellReuseIdentifier: GenreCell.reuseID)
-        
-        dataSource = UITableViewDiffableDataSource(tableView: genresTableView) { tableView, indexPath, genreToggle in
-            let cell = tableView.dequeueReusableCell(withIdentifier: GenreCell.reuseID, for: indexPath) as? GenreCell
-            cell?.set(genreToggle: genreToggle, toggleChanged: self.toggleChanged)
-            
-            return cell
-        }
-        
-        var snapshot = NSDiffableDataSourceSnapshot<Section, GenreToggle>()
-        snapshot.appendSections([.main])
-        snapshot.appendItems([
-            GenreToggle(id: 28, name: "Action"),
-            GenreToggle(id: 12, name: "Adventure"),
-            GenreToggle(id: 16, name: "Animation"),
-            GenreToggle(id: 35, name: "Comedy"),
-            GenreToggle(id: 80, name: "Crime"),
-            GenreToggle(id: 99, name: "Documentary"),
-            GenreToggle(id: 18, name: "Drama"),
-            GenreToggle(id: 10751, name: "Family"),
-            GenreToggle(id: 14, name: "Fantasy"),
-            GenreToggle(id: 36, name: "History"),
-            GenreToggle(id: 27, name: "Horror"),
-            GenreToggle(id: 10402, name: "Music"),
-            GenreToggle(id: 9648, name: "Mystery"),
-            GenreToggle(id: 10749, name: "Romance"),
-            GenreToggle(id: 878, name: "Science Fiction"),
-            GenreToggle(id: 10770, name: "TV Movie"),
-            GenreToggle(id: 53, name: "Thriller"),
-            GenreToggle(id: 10752, name: "War"),
-            GenreToggle(id: 37, name: "Western"),
-        ])
-        
-        DispatchQueue.main.async {
-            self.dataSource.apply(snapshot, animatingDifferences: false)
-        }
     }
     
-    private func toggleChanged(newValue: Bool) {
-        self.toggleChanged?(newValue)
+    private func toggleChanged(genreInfo: (GenreToggle, Bool)) {
+        guard let firstIndex = genreInfosDataSource?.genreInfos.firstIndex(where: { $0.id == genreInfo.0.id }) else { return }
+        genreInfosDataSource?.genreInfos[firstIndex].isEnabled = genreInfo.1
+        delegate?.onGenreSelected(genreInfo: genreInfo)
+    }
+}
+
+extension SelectGenresSheet: UITableViewDataSource {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        genreInfosDataSource?.genreInfos.count ?? 0
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: GenreCell.reuseID, for: indexPath) as! GenreCell
+        let genreToggle = (genreInfosDataSource?.genreInfos ?? [])[indexPath.row]
+        cell.set(genreToggle: genreToggle, toggleChanged: toggleChanged)
+        cell.selectionStyle = .none
+        
+        return cell
     }
 }
 
@@ -96,4 +93,5 @@ class SelectGenresSheet: UIViewController {
 struct GenreToggle: Equatable, Hashable {
     let id: Int
     let name: String
+    var isEnabled: Bool
 }

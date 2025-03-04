@@ -9,7 +9,8 @@ import UIKit
 
 class GenreCell: UITableViewCell {
     static let reuseID = "GenreCell"
-    private var toggleChanged: ((Bool) -> Void)?
+    private var genreToggle: GenreToggle!
+    private var toggleChanged: (((GenreToggle, Bool)) -> Void)!
     
     private let titleLabel = DynamicLabel(textColor: .label, font: UIFont.preferredFont(for: .body, weight: .regular))
     private let toggle = UISwitch()
@@ -23,9 +24,11 @@ class GenreCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func set(genreToggle: GenreToggle, toggleChanged: ((Bool) -> Void)? = nil) {
-        titleLabel.text = genreToggle.name
+    func set(genreToggle: GenreToggle, toggleChanged: @escaping ((GenreToggle, Bool)) -> Void) {
+        self.genreToggle = genreToggle
         self.toggleChanged = toggleChanged
+        titleLabel.text = genreToggle.name
+        toggle.isOn = genreToggle.isEnabled
     }
     
     private func configure() {
@@ -45,20 +48,17 @@ class GenreCell: UITableViewCell {
             
             toggle.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
             toggle.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -horizontalPadding),
-            toggle.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -verticalPadding),
-            
-            
+            toggle.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -verticalPadding)
         ])
     }
     
     @objc private func onChanged() {
-        toggleChanged?(toggle.isOn)
+        toggleChanged?((genreToggle, toggle.isOn))
     }
 }
 
 #Preview {
-//    let cell = GenreCell(title: "Rock")
     let cell = GenreCell()
-    cell.set(genreToggle: GenreToggle(id: 1, name: "Rock"))
+    cell.set(genreToggle: GenreToggle(id: 1, name: "Rock", isEnabled: false), toggleChanged: { _ in })
     return cell
 }
