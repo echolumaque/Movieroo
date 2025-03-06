@@ -17,6 +17,10 @@ protocol MainTabRouter {
 class MainTabRouterImpl: MainTabRouter {
     weak var view: (any MainTabEntryPoint)?
     
+    // Store child coordinators to manage their lifecycle. (Refer to bookmarks as this is using MVVM-C rather tha VIPER)
+    private var childCoordinators: [Coordinator] = []
+
+    
     static func start() -> MainTabRouter {
         let view = MainTabViewController()
         let interactor = MainTabInteractorImpl()
@@ -24,7 +28,7 @@ class MainTabRouterImpl: MainTabRouter {
         let router = MainTabRouterImpl()
         
         view.presenter = presenter
-        view.viewControllers = [createMoviesVC(), createBookmarksVC()]
+        view.viewControllers = [createMoviesVC(), createBookmarksVC(router: router)]
         
         interactor.presenter = presenter
         
@@ -45,10 +49,19 @@ class MainTabRouterImpl: MainTabRouter {
         return UINavigationController(rootViewController: moviesVC ?? UIViewController())
     }
     
-    private static func createBookmarksVC() -> UINavigationController{
-        let bookmarksVC = BookmarksViewController()
-        bookmarksVC.tabBarItem = UITabBarItem(title: "Bookmarks", image: UIImage(systemName: "bookmark.fill"), tag: 1)
+    private static func createBookmarksVC(router: MainTabRouterImpl) -> UINavigationController {
+        let persistenceManagerClass = PersistenceManagerClass()
+        let bookmarksCoordinator = BookmarksCoordinator(persistenceManagerClass: persistenceManagerClass)
         
-        return UINavigationController(rootViewController: bookmarksVC)
+        bookmarksCoordinator.onFinished = {
+            guard let coordinatorIndex = router.childCoordinators.firstIndex(where: { $0 === bookmarksCoordinator }) else { return }
+            
+            router.childCoordinators.remove(at: coordinatorIndex)
+            print("removed in the children")
+        }
+        router.childCoordinators.append(bookmarksCoordinator)
+        bookmarksCoordinator.start()
+        
+        return bookmarksCoordinator.rootViewController
     }
 }

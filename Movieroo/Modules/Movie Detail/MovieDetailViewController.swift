@@ -23,6 +23,7 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
     private let verticalPadding: CGFloat = 8
     
     private var movieId: Int!
+    private var movie: MovieResult!
     
     private let scrollView = UIScrollView()
     private let contentView = UIView()
@@ -52,9 +53,10 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
     private let reviewTableView = DynamicTableView()
     private var reviewDataSource: UITableViewDiffableDataSource<Section, Review>!
     
-    init(movieId: Int) {
+    init(movie: MovieResult) {
         super.init(nibName: nil, bundle: nil)
-        self.movieId = movieId
+        self.movie = movie
+        self.movieId = movie.id
     }
     
     required init?(coder: NSCoder) {
@@ -76,12 +78,24 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
     }
     
     func set(wrappedMovieDetail: WrappedMovieDetail) {
-        // MARK: - Homepage
+        // MARK: - Navigation bar
+        var rightBarButtonItems: [UIBarButtonItem] = []
+        let bookmarkIcon = PersistenceManager.checkIfIsFavorite(movie: movie) ? "bookmark.fill" : "bookmark"
+        let bookmarkButton = UIBarButtonItem(image: UIImage(systemName: bookmarkIcon), primaryAction: UIAction { [weak self] _ in
+            guard let self else { return }
+            presenter?.upsertFavoriteMovie(movie: movie)
+        })
+        rightBarButtonItems.append(bookmarkButton)
+        
         if let homePageUrl = URL(string: wrappedMovieDetail.movieDetail.homepage) {
-            navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "iphone.badge.play"), primaryAction: UIAction { [weak self] _ in
+            let homePageButton = UIBarButtonItem(image: UIImage(systemName: "iphone.badge.play"), primaryAction: UIAction { [weak self] _ in
                 self?.presentSafariVC(with: homePageUrl)
             })
+            
+            rightBarButtonItems.append(homePageButton)
         }
+        
+        navigationItem.rightBarButtonItems = rightBarButtonItems
         
         // MARK: - Hero
         let hasYoutubeVideo = wrappedMovieDetail.movieVideo.hasYoutubeVideo
@@ -353,10 +367,10 @@ extension MovieDetailViewController: UITableViewDelegate, ReviewCellDelegate {
     }
 }
 
-#Preview {
-    let vc = MovieDetailViewController(movieId: 27205)
-    vc.viewDidLoad()
-    vc.updateMovieDetails(.success(WrappedMovieDetail.test))
-    
-    return vc
-}
+//#Preview {
+//    let vc = MovieDetailViewController(movie)
+//    vc.viewDidLoad()
+//    vc.updateMovieDetails(.success(WrappedMovieDetail.test))
+//    
+//    return vc
+//}

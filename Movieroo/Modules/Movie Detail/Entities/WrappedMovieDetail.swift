@@ -7,12 +7,14 @@
 
 import Foundation
 
-struct WrappedMovieDetail: Codable {
+struct WrappedMovieDetail: Codable, Equatable {
     let movieDetail: MovieDetail
     let movieReview: MovieReview
     let movieCertification: MovieCertification
     let movieRecommendations: [MovieResult]
     let movieVideo: MovieVideo
+    
+    static func ==(lhs: WrappedMovieDetail, rhs: WrappedMovieDetail) -> Bool { lhs.movieDetail.imdbID == rhs.movieDetail.imdbID }
 }
 
 extension WrappedMovieDetail {

@@ -7,6 +7,12 @@
 
 import Foundation
 
+extension Encodable {
+    func encode() -> Data? {
+        try? JSONEncoder().encode(self)
+    }
+}
+
 extension Data {
     func decode<T: Decodable>(to type: T.Type,
                               keyDecodingStrategy: JSONDecoder.KeyDecodingStrategy? = nil,

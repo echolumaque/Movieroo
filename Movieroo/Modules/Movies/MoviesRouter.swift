@@ -45,7 +45,7 @@ class MoviesRouterImpl: MoviesRouter {
     }
     
     func showMovieDetail(for movie: MovieResult) {
-        let movieDetail = MovieDetailRouterImpl.start(movieId: movie.id)
+        let movieDetail = MovieDetailRouterImpl.start(movie: movie)
         let movieDetailView = movieDetail.view
         
         let movieDetailVC = UINavigationController(rootViewController: movieDetailView ?? UIViewController())
