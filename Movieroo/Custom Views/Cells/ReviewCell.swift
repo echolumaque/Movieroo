@@ -47,8 +47,8 @@ class ReviewCell: UITableViewCell {
     
     func set(review: Review) {
         if let avatarPath = review.authorDetails?.avatarPath {
-            Task {
-                authorAvatar.image = await NetworkManager.shared.downloadImage(from: "https://image.tmdb.org/t/p/w45\(avatarPath)")
+            Task { [weak self] in
+                self?.authorAvatar.image = await NetworkManager.shared.downloadImage(from: "https://image.tmdb.org/t/p/w45\(avatarPath)")
             }
         }
         

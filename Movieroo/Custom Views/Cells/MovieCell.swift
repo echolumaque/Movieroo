@@ -50,8 +50,8 @@ class MovieCell: UICollectionViewCell {
     
     func set(movie: MovieResult) {
         if let posterPath = movie.posterPath {
-            Task {
-                moviePoster.image = await NetworkManager.shared.downloadImage(from: "https://image.tmdb.org/t/p/w92\(posterPath)")
+            Task { [weak self] in
+                self?.moviePoster.image = await NetworkManager.shared.downloadImage(from: "https://image.tmdb.org/t/p/w92\(posterPath)")
             }
         } else {
             moviePoster.tintColor = .systemPurple
@@ -119,7 +119,7 @@ class MovieCell: UICollectionViewCell {
             miscInfoView.topAnchor.constraint(greaterThanOrEqualTo: moviePoster.bottomAnchor, constant: verticalPadding),
             miscInfoView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: horizontalPadding),
             miscInfoView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -horizontalPadding),
-            miscInfoView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
+            miscInfoView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -verticalPadding)
         ])
     }
     

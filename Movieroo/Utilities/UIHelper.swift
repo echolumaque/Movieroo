@@ -19,6 +19,25 @@ struct UIHelper {
         return flowLayout
     }
     
+    static func listLayout(
+        interGroupSpacing: CGFloat,
+        leadingAction: ((IndexPath) -> UISwipeActionsConfiguration)? = nil,
+        trailingAction: ((IndexPath) -> UISwipeActionsConfiguration)? = nil
+    ) -> UICollectionViewCompositionalLayout {
+        var listConfig = UICollectionLayoutListConfiguration(appearance: .plain)
+        listConfig.showsSeparators = false
+        listConfig.leadingSwipeActionsConfigurationProvider = leadingAction
+        listConfig.trailingSwipeActionsConfigurationProvider = trailingAction
+        
+        let layout = UICollectionViewCompositionalLayout { sectionIndex, layoutEnvironment in
+            let section = NSCollectionLayoutSection.list(using: listConfig, layoutEnvironment: layoutEnvironment)
+            section.interGroupSpacing = interGroupSpacing
+            return section
+        }
+        
+        return layout
+    }
+    
     static func createVerticalCompositionalLayout(
         itemSize: NSCollectionLayoutSize,
         groupSize: NSCollectionLayoutSize,

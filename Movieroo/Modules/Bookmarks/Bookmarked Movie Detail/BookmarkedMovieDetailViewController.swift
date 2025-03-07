@@ -1,29 +1,19 @@
 //
-//  MovieDetailViewController.swift
+//  BookmarkedMovieDetailViewController.swift
 //  Movieroo
 //
-//  Created by Echo Lumaque on 2/24/25.
+//  Created by Echo Lumaque on 3/7/25.
 //
 
 import UIKit
-import SwiftUI
 import WebKit
 
-protocol MovieDetailView: AnyObject {
-    var presenter: MovieDetailPresenter? { get set }
-    func updateMovieDetails(_ result: Result<WrappedMovieDetail, NetworkingError>)
-    func updateRecommendationDataSource()
-    func updateReviewDataSource()
-}
-
-class MovieDetailViewController: UIViewController, MovieDetailView {
-    var presenter: (any MovieDetailPresenter)?
+class BookmarkedMovieDetailViewController: BindableViewController {
+    weak var dismissDelegate: DismissDelegate?
+    private let vm: BookmarkedMovieDetailViewModel
     
     private let horizontalPadding: CGFloat = 16
     private let verticalPadding: CGFloat = 8
-    
-    private var movieId: Int!
-    private var movie: MovieResult!
     
     private let scrollView = UIScrollView()
     private let contentView = UIView()
@@ -53,10 +43,9 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
     private let reviewTableView = DynamicTableView()
     private var reviewDataSource: UITableViewDiffableDataSource<Section, Review>!
     
-    init(movie: MovieResult) {
+    init(vm: BookmarkedMovieDetailViewModel) {
+        self.vm = vm
         super.init(nibName: nil, bundle: nil)
-        self.movie = movie
-        self.movieId = movie.id
     }
     
     required init?(coder: NSCoder) {
@@ -74,16 +63,52 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
         configureRecommendationsHeader()
         configureRecommendations()
         configureReviews()
-        getMovieDetailAndReview()
     }
     
-    func set(wrappedMovieDetail: WrappedMovieDetail) {
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        Task { [weak self] in await self?.vm.onAppear() }
+    }
+    
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        dismissDelegate?.onDismiss()
+    }
+    
+    override func bindViewModel() {
+        super.bindViewModel()
+        
+        bind(vm.$isFavoriteMovie) { [weak self] in
+            self?.navigationItem.rightBarButtonItems?[0].image = UIImage(systemName: $0 ? "bookmark.fill" : "bookmark")
+        }
+        
+        bind(vm.$wrappedMovieDetail) { [weak self] wrappedMovieDetail in
+            guard let wrappedMovieDetail else { return }
+            self?.setProperties(wrappedMovieDetail: wrappedMovieDetail)
+        }
+        
+        bind(vm.$movieRecommendations) { [weak self] in
+            var snapshot = NSDiffableDataSourceSnapshot<Section, MovieResult>()
+            snapshot.appendSections([.main])
+            snapshot.appendItems($0)
+            DispatchQueue.main.async { self?.recommendationDataSource.apply(snapshot, animatingDifferences: true) }
+        }
+        
+        bind(vm.$movieReviews) { [weak self] in
+            var snapshot = NSDiffableDataSourceSnapshot<Section, Review>()
+            snapshot.appendSections([.main])
+            snapshot.appendItems($0)
+            DispatchQueue.main.async { self?.reviewDataSource.apply(snapshot, animatingDifferences: true) }
+        }
+    }
+    
+    private func setProperties(wrappedMovieDetail: WrappedMovieDetail) {
         // MARK: - Navigation bar
         var rightBarButtonItems: [UIBarButtonItem] = []
-        let bookmarkIcon = PersistenceManager.checkIfIsFavorite(movie: movie) ? "bookmark.fill" : "bookmark"
+        let bookmarkIcon = vm.isFavoriteMovie ? "bookmark.fill" : "bookmark"
         let bookmarkButton = UIBarButtonItem(image: UIImage(systemName: bookmarkIcon), primaryAction: UIAction { [weak self] _ in
             guard let self else { return }
-            presenter?.upsertFavoriteMovie(movie: movie)
+            vm.upsertFavoriteMovie()
         })
         rightBarButtonItems.append(bookmarkButton)
         
@@ -141,13 +166,12 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
         }
     }
     
-    func configureViewController() {
+    private func configureViewController() {
         view.backgroundColor = .systemBackground
         title = "Movie Details"
-        navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .done, target: self, action: #selector(dismissVC))
     }
     
-    func configureScrollView() {
+    private func configureScrollView() {
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
         scrollView.pinToEdges(of: view)
@@ -162,7 +186,7 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
         )
     }
     
-    func configureHeroView() {
+    private func configureHeroView() {
         heroView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             heroView.topAnchor.constraint(equalTo: scrollView.topAnchor),
@@ -172,7 +196,7 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
         ])
     }
     
-    func configureTitle() {
+    private func configureTitle() {
         NSLayoutConstraint.activate([
             movieTitle.topAnchor.constraint(equalTo: heroView.bottomAnchor, constant: verticalPadding),
             movieTitle.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: horizontalPadding),
@@ -180,7 +204,7 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
         ])
     }
     
-    func configureSubtitle() {
+    private func configureSubtitle() {
         NSLayoutConstraint.activate([
             movieSubtitles.topAnchor.constraint(equalTo: movieTitle.bottomAnchor, constant: verticalPadding),
             movieSubtitles.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: horizontalPadding),
@@ -188,7 +212,7 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
         ])
     }
     
-    func configureOverview() {
+    private func configureOverview() {
         let overviewDivider = Divider()
         contentView.addSubview(overviewDivider)
         
@@ -204,7 +228,7 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
         ])
     }
     
-    func configureRecommendationsHeader() {
+    private func configureRecommendationsHeader() {
         let recommendationDivider = Divider()
         recommendationLabel.text = "Also Watch:"
         
@@ -221,7 +245,7 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
         ])
     }
     
-    func configureRecommendations() {
+    private func configureRecommendations() {
         let collectionLayoutSize = NSCollectionLayoutSize(widthDimension: .absolute(154), heightDimension: .fractionalHeight(1.0))
         recommendationCollectionView = HorizontalCompositionalUICollectionView(
             itemSize: collectionLayoutSize,
@@ -254,7 +278,7 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
         }
     }
     
-    func configureReviews() {
+    private func configureReviews() {
         contentView.addSubview(reviewTableView)
         reviewTableView.translatesAutoresizingMaskIntoConstraints = false
         reviewTableView.estimatedRowHeight = 80
@@ -281,63 +305,31 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
         }
     }
     
-    func updateRecommendationDataSource() {
-        var snapshot = NSDiffableDataSourceSnapshot<Section, MovieResult>()
-        snapshot.appendSections([.main])
-        snapshot.appendItems(presenter?.movieRecommendations ?? [])
-        recommendationDataSource.apply(snapshot, animatingDifferences: true)
-    }
-    
-    func updateReviewDataSource() {
-        var snapshot = NSDiffableDataSourceSnapshot<Section, Review>()
-        snapshot.appendSections([.main])
-        snapshot.appendItems(presenter?.movieReviews ?? [])
-        reviewDataSource.apply(snapshot, animatingDifferences: true)
-    }
-    
-    private func getMovieDetailAndReview() {
-        Task { [weak self] in try await self?.presenter?.fetchMovieDetails(for: self?.movieId ?? -1) }
-    }
-    
-    func updateMovieDetails(_ result: Result<WrappedMovieDetail, NetworkingError>) {
-        switch result {
-        case .success(let wrappedMovieDetail):
-            DispatchQueue.main.async {
-                self.set(wrappedMovieDetail: wrappedMovieDetail)
-                self.updateRecommendationDataSource()
-                self.updateReviewDataSource()
-            }
-            
-        case .failure(let failure):
-            print("Network error: \(failure)")
-        }
-    }
-    
     @objc private func getMoreReviews() {
-        presenter?.reviewsPage += 1
-        Task { [weak self] in try await self?.presenter?.fetchMovieReviews(for: self?.movieId ?? -1) }
+        vm.reviewsPage += 1
+        Task { [weak self] in try await self?.vm.fetchMovieReviews() }
     }
 }
 
-extension MovieDetailViewController: UICollectionViewDelegate, HorizontalCompositionalUICollectionViewDelegate {
+extension BookmarkedMovieDetailViewController: UICollectionViewDelegate, HorizontalCompositionalUICollectionViewDelegate {
     func collectionViewDidInvalidateVisibleItems(visibleItems: [any NSCollectionLayoutVisibleItem], contentOffset: CGPoint, environment: any NSCollectionLayoutEnvironment) {
-        guard let presenter else { return}
         guard recommendationCollectionView.numberOfSections > 0 else { return }
         let totalItems = recommendationCollectionView.numberOfItems(inSection: 0)
-        guard totalItems > 1 else { return }
+        guard totalItems > 0 else { return }
         
         let targetIndexPath = IndexPath(item: totalItems - 1, section: 0)
         if recommendationCollectionView.indexPathsForVisibleItems.contains(targetIndexPath) {
-            guard !presenter.hasTriggeredLastVisible, presenter.recommendationsPage > 0, presenter.recommendationsPage <= 500 else {
-                presenter.hasTriggeredLastVisible = false
+            guard !vm.hasTriggeredLastVisibleRecommendation, vm.recommendationsPage > 0, vm.recommendationsPage <= 500 else {
+                vm.hasTriggeredLastVisibleRecommendation = false
                 return
             }
             
-            presenter.recommendationsPage += 1
-            presenter.hasTriggeredLastVisible = true
-            Task { [weak self] in try await self?.presenter?.fetchMovieRecommendations(for: self?.movieId ?? -1) }
+            vm.recommendationsPage += 1
+            vm.hasTriggeredLastVisibleRecommendation = true
+            Task { [weak self] in try await self?.vm.fetchMovieRecommendations() }
+            
         } else {
-            presenter.hasTriggeredLastVisible = false
+            vm.hasTriggeredLastVisibleRecommendation = false
         }
     }
     
@@ -348,7 +340,7 @@ extension MovieDetailViewController: UICollectionViewDelegate, HorizontalComposi
     }
 }
 
-extension MovieDetailViewController: UITableViewDelegate, ReviewCellDelegate {
+extension BookmarkedMovieDetailViewController: UITableViewDelegate, ReviewCellDelegate {
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let seeMoreReviewsBtn = UIButton()
         seeMoreReviewsBtn.configuration = .filled()
@@ -366,11 +358,3 @@ extension MovieDetailViewController: UITableViewDelegate, ReviewCellDelegate {
         reviewTableView.endUpdates()
     }
 }
-
-//#Preview {
-//    let vc = MovieDetailViewController(movie)
-//    vc.viewDidLoad()
-//    vc.updateMovieDetails(.success(WrappedMovieDetail.test))
-//    
-//    return vc
-//}

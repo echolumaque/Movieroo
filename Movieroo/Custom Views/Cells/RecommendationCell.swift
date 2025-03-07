@@ -36,8 +36,8 @@ class RecommendationCell: UICollectionViewCell {
     
     func set(movieResult: MovieResult) {
         if let posterPath = movieResult.posterPath {
-            Task {
-                posterView.image = await NetworkManager.shared.downloadImage(from: "https://image.tmdb.org/t/p/w185\(posterPath)")
+            Task { [weak self] in
+                self?.posterView.image = await NetworkManager.shared.downloadImage(from: "https://image.tmdb.org/t/p/w185\(posterPath)")
             }
         }
         

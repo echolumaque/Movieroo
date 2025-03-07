@@ -7,7 +7,7 @@
 
 import Foundation
 
-class BookmarksViewModel {
+class BookmarksViewModel: ObservableObject {
     private let persistenceManagerClass: PersistenceManagerClass
     
     @Published private(set) var favorites: [MovieResult] = []
@@ -23,5 +23,10 @@ class BookmarksViewModel {
     
     private func getFavorites() {
         favorites = persistenceManagerClass.getFavorites()
+    }
+    
+    func upsertFavorite(index: Int) {
+        let isAdded = persistenceManagerClass.upsertFavorite(movie: favorites[index])
+        if !isAdded { favorites.remove(at: index) }
     }
 }

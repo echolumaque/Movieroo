@@ -45,13 +45,11 @@ class BookmarksViewController: BindableViewController {
     }
     
     private func configureCollectionView() {
-        let size = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .estimated(100))
         favoritesCollectionView = UICollectionView(
             frame: .zero,
-            collectionViewLayout: UIHelper.createVerticalCompositionalLayout(
-                itemSize: size,
-                groupSize: size,
-                interGroupSpacing: 20
+            collectionViewLayout: UIHelper.listLayout(
+                interGroupSpacing: 20,
+                trailingAction: collectionViewTrailingAction
             )
         )
         favoritesCollectionView.delegate = self
@@ -64,7 +62,23 @@ class BookmarksViewController: BindableViewController {
         }
     }
     
+    private func collectionViewTrailingAction(indexPath: IndexPath) -> UISwipeActionsConfiguration {
+        let removeFromFavoritesActionHandler: UIContextualAction.Handler = { [weak self] action, view, completion in
+            guard let self else {
+                completion(false)
+                return
+            }
+            vm.upsertFavorite(index: indexPath.item)
+//            completion(true)
+        }
+        let removeFromFavoritesAction = UIContextualAction(style: .destructive, title: "Delete", handler: removeFromFavoritesActionHandler)
+        removeFromFavoritesAction.image = UIImage(systemName: "trash.fill")
+        
+        return UISwipeActionsConfiguration(actions: [removeFromFavoritesAction])
+    }
+    
     override func bindViewModel() {
+        super.bindViewModel()
         bind(vm.$favorites) { [weak self] movies in
             guard let self else { return }
             var snapshot = NSDiffableDataSourceSnapshot<Section, MovieResult>()

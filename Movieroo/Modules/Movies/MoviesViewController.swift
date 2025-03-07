@@ -99,10 +99,8 @@ class MoviesViewController: UIViewController, MoviesView {
     }
     
     private func fetchTrendingMovies() {
-        guard let presenter else { return }
-        
         showLoadingView()
-        Task { await presenter.fetchTrendingMovies(page: presenter.page) }
+        Task { [weak self] in await self?.presenter?.fetchTrendingMovies(page: self?.presenter?.page ?? -1) }
         dismissLoadingView()
     }
 }

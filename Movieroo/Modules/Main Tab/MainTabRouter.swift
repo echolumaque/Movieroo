@@ -19,7 +19,8 @@ class MainTabRouterImpl: MainTabRouter {
     
     // Store child coordinators to manage their lifecycle. (Refer to bookmarks as this is using MVVM-C rather tha VIPER)
     private var childCoordinators: [Coordinator] = []
-
+    private let networkManager = NetworkManagerClass()
+    private let persistenceManager = PersistenceManagerClass()
     
     static func start() -> MainTabRouter {
         let view = MainTabViewController()
@@ -50,14 +51,15 @@ class MainTabRouterImpl: MainTabRouter {
     }
     
     private static func createBookmarksVC(router: MainTabRouterImpl) -> UINavigationController {
-        let persistenceManagerClass = PersistenceManagerClass()
-        let bookmarksCoordinator = BookmarksCoordinator(persistenceManagerClass: persistenceManagerClass)
+        let bookmarksCoordinator = BookmarksCoordinator(
+            networkManager: router.networkManager,
+            persistenceManager: router.persistenceManager
+        )
         
         bookmarksCoordinator.onFinished = {
             guard let coordinatorIndex = router.childCoordinators.firstIndex(where: { $0 === bookmarksCoordinator }) else { return }
             
             router.childCoordinators.remove(at: coordinatorIndex)
-            print("removed in the children")
         }
         router.childCoordinators.append(bookmarksCoordinator)
         bookmarksCoordinator.start()
