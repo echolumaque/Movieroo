@@ -348,9 +348,11 @@ extension MovieDetailViewController: UICollectionViewDelegate, HorizontalComposi
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-//        guard let presenter else { return }
-//        presenter.showMovieDetail(for: presenter.movieResults[indexPath.item])
-        print("tapped")
+        guard let selectedMovieId = presenter?.movieRecommendations[indexPath.item].id else { return }
+        
+        presenter?.movieRecommendations.removeAll()
+        presenter?.movieReviews.removeAll()
+        Task { [weak self] in try await self?.presenter?.fetchMovieDetails(for: selectedMovieId) }
     }
 }
 

@@ -339,9 +339,11 @@ extension BookmarkedMovieDetailViewController: UICollectionViewDelegate, Horizon
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-//        guard let presenter else { return }
-//        presenter.showMovieDetail(for: presenter.movieResults[indexPath.item])
-        print("tapped")
+        let selectedMovie = vm.movieRecommendations[indexPath.item]
+        vm.movieRecommendations.removeAll()
+        vm.movieReviews.removeAll()
+        vm.selectedMovie = selectedMovie
+        Task { [weak self] in try await self?.vm.fetchMovieDetails() }
     }
 }
 

@@ -10,7 +10,7 @@ import Foundation
 class BookmarkedMovieDetailViewModel: ObservableObject {
     private let networkManager: NetworkManager
     private let persistenceManager: PersistenceManager
-    private let selectedMovie: MovieResult
+    var selectedMovie: MovieResult
     
     @Published var hasTriggeredLastVisibleRecommendation = false
     @Published var recommendationsPage = 1
@@ -27,12 +27,16 @@ class BookmarkedMovieDetailViewModel: ObservableObject {
     }
     
     func onAppear() async {
-        isFavoriteMovie = persistenceManager.checkIfIsFavorite(movie: selectedMovie)
         try? await fetchMovieDetails()
     }
     
-    private func fetchMovieDetails() async throws(NetworkingError) {
+    func checkIfFavoriteMovie() {
+        isFavoriteMovie = persistenceManager.checkIfIsFavorite(movie: selectedMovie)
+    }
+    
+    func fetchMovieDetails() async throws(NetworkingError) {
         do {
+            checkIfFavoriteMovie()
             let id = selectedMovie.id
             let movieDetailUrl = "\(Configuration.NetworkCall.baseUrl.rawValue)/movie/\(id)?language=en-US"
             let movieCertificationUrl = "\(Configuration.NetworkCall.baseUrl.rawValue)/movie/\(id)/release_dates"
@@ -65,7 +69,7 @@ class BookmarkedMovieDetailViewModel: ObservableObject {
                 movieVideo: movieVideo
             )
         } catch {
-            print("Error in MovieDetailInteractor: \(error)")
+            print("Error in BookmarkedMovieDetailViewModel: \(error)")
             if let networkingError = error as? NetworkingError {
                 throw networkingError
             } else {
