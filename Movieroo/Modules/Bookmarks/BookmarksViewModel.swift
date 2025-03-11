@@ -8,13 +8,13 @@
 import Foundation
 
 class BookmarksViewModel: ObservableObject {
-    private let persistenceManagerClass: PersistenceManagerClass
+    private let persistenceManager: PersistenceManager
     
     @Published private(set) var favorites: [MovieResult] = []
     @Published var selectedMovieResult: MovieResult?
     
-    init(persistenceManagerClass: PersistenceManagerClass) {
-        self.persistenceManagerClass = persistenceManagerClass
+    init(persistenceManager: PersistenceManager) {
+        self.persistenceManager = persistenceManager
     }
     
     func onAppear() {
@@ -22,11 +22,11 @@ class BookmarksViewModel: ObservableObject {
     }
     
     private func getFavorites() {
-        favorites = persistenceManagerClass.getFavorites()
+        favorites = persistenceManager.getFavorites() 
     }
     
     func upsertFavorite(index: Int) {
-        let isAdded = persistenceManagerClass.upsertFavorite(movie: favorites[index])
+        let isAdded = persistenceManager.upsertFavorite(movie: favorites[index])
         if !isAdded { favorites.remove(at: index) }
     }
 }

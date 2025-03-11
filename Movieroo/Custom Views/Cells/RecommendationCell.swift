@@ -34,10 +34,10 @@ class RecommendationCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func set(movieResult: MovieResult) {
+    func set(movieResult: MovieResult, networkManager: NetworkManager?) {
         if let posterPath = movieResult.posterPath {
             Task { [weak self] in
-                self?.posterView.image = await NetworkManager.shared.downloadImage(from: "https://image.tmdb.org/t/p/w185\(posterPath)")
+                self?.posterView.image = await networkManager?.downloadImage(from: "https://image.tmdb.org/t/p/w185\(posterPath)")
             }
         }
         
@@ -83,7 +83,7 @@ class RecommendationCell: UICollectionViewCell {
 
 #Preview {
     let cell = RecommendationCell()
-    cell.set(movieResult: WrappedMovieDetail.test.movieRecommendations.first!)
+    cell.set(movieResult: WrappedMovieDetail.test.movieRecommendations.first!, networkManager: NetworkManagerImpl())
     
     return cell
 }

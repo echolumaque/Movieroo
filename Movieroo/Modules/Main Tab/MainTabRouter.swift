@@ -6,12 +6,12 @@
 //
 
 import UIKit
+import Swinject
 
 typealias MainTabEntryPoint = MainTabView & UITabBarController
 
 protocol MainTabRouter {
     var view: MainTabEntryPoint? { get }
-    static func start() -> MainTabRouter
 }
 
 class MainTabRouterImpl: MainTabRouter {
@@ -19,46 +19,23 @@ class MainTabRouterImpl: MainTabRouter {
     
     // Store child coordinators to manage their lifecycle. (Refer to bookmarks as this is using MVVM-C rather tha VIPER)
     private var childCoordinators: [Coordinator] = []
-    private let networkManager = NetworkManagerClass()
-    private let persistenceManager = PersistenceManagerClass()
     
-    static func start() -> MainTabRouter {
-        let view = MainTabViewController()
-        let interactor = MainTabInteractorImpl()
-        let presenter = MainTabPresenterImpl()
-        let router = MainTabRouterImpl()
-        
-        view.presenter = presenter
-        view.viewControllers = [createMoviesVC(), createBookmarksVC(router: router)]
-        
-        interactor.presenter = presenter
-        
-        presenter.view = view
-        presenter.interactor = interactor
-        presenter.router = router
-        
-        router.view = view
-        return router
-    }
-    
-    private static func createMoviesVC() -> UINavigationController {
-        let moviesModule = MoviesRouterImpl.start()
-        let moviesVC = moviesModule.view
-        moviesVC?.tabBarItem = UITabBarItem(title: "Movies", image: UIImage(systemName: "popcorn.fill"), tag: 0)
-        moviesVC?.navigationItem.title = "Movieroo"
-        
+    func createMoviesVC(container: Resolver) -> UINavigationController {
+        let moviesVC = container.resolve(MoviesRouter.self)?.view
         return UINavigationController(rootViewController: moviesVC ?? UIViewController())
     }
     
-    private static func createBookmarksVC(router: MainTabRouterImpl) -> UINavigationController {
+    func createBookmarksVC(router: MainTabRouterImpl, container: Resolver) -> UINavigationController {
+        guard let networkManager = container.resolve(NetworkManager.self),
+              let persistenceManager = container.resolve(PersistenceManager.self) else { return UINavigationController() }
+        
         let bookmarksCoordinator = BookmarksCoordinator(
-            networkManager: router.networkManager,
-            persistenceManager: router.persistenceManager
+            networkManager: networkManager,
+            persistenceManager: persistenceManager
         )
         
-        bookmarksCoordinator.onFinished = {
+        bookmarksCoordinator.onFinished = { 
             guard let coordinatorIndex = router.childCoordinators.firstIndex(where: { $0 === bookmarksCoordinator }) else { return }
-            
             router.childCoordinators.remove(at: coordinatorIndex)
         }
         router.childCoordinators.append(bookmarksCoordinator)

@@ -48,10 +48,10 @@ class MovieCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func set(movie: MovieResult) {
+    func set(movie: MovieResult, networkManager: NetworkManager?) {
         if let posterPath = movie.posterPath {
             Task { [weak self] in
-                self?.moviePoster.image = await NetworkManager.shared.downloadImage(from: "https://image.tmdb.org/t/p/w92\(posterPath)")
+                self?.moviePoster.image = await networkManager?.downloadImage(from: "https://image.tmdb.org/t/p/w92\(posterPath)")
             }
         } else {
             moviePoster.tintColor = .systemPurple
@@ -156,7 +156,7 @@ class MovieCell: UICollectionViewCell {
 
 #Preview {
     let cell = MovieCell()
-    cell.set(movie: WrappedMovieDetail.test.movieRecommendations.first!)
+    cell.set(movie: WrappedMovieDetail.test.movieRecommendations.first!, networkManager: NetworkManagerImpl())
     
     return cell
 }

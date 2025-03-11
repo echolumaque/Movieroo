@@ -7,6 +7,7 @@
 
 import UIKit
 import SwiftUI
+import Swinject
 import WebKit
 
 protocol MovieDetailView: AnyObject {
@@ -19,6 +20,8 @@ protocol MovieDetailView: AnyObject {
 class MovieDetailViewController: UIViewController, MovieDetailView {
     var presenter: (any MovieDetailPresenter)?
     
+    private let networkManager: NetworkManager?
+    private let persistenceManager: PersistenceManager?
     private let horizontalPadding: CGFloat = 16
     private let verticalPadding: CGFloat = 8
     
@@ -53,10 +56,12 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
     private let reviewTableView = DynamicTableView()
     private var reviewDataSource: UITableViewDiffableDataSource<Section, Review>!
     
-    init(movie: MovieResult) {
-        super.init(nibName: nil, bundle: nil)
+    init(movie: MovieResult, container: Resolver) {
+        networkManager = container.resolve(NetworkManager.self)
+        persistenceManager = container.resolve(PersistenceManager.self)
         self.movie = movie
         self.movieId = movie.id
+        super.init(nibName: nil, bundle: nil)
     }
     
     required init?(coder: NSCoder) {
@@ -80,10 +85,10 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
     func set(wrappedMovieDetail: WrappedMovieDetail) {
         // MARK: - Navigation bar
         var rightBarButtonItems: [UIBarButtonItem] = []
-        let bookmarkIcon = PersistenceManager.checkIfIsFavorite(movie: movie) ? "bookmark.fill" : "bookmark"
+        let bookmarkIcon = (persistenceManager?.checkIfIsFavorite(movie: movie) ?? false) ? "bookmark.fill" : "bookmark"
         let bookmarkButton = UIBarButtonItem(image: UIImage(systemName: bookmarkIcon), primaryAction: UIAction { [weak self] _ in
             guard let self else { return }
-            presenter?.upsertFavoriteMovie(movie: movie)
+            presenter?.upsertFavoriteMovie(movie: movie, persistenceManager: persistenceManager)
         })
         rightBarButtonItems.append(bookmarkButton)
         
@@ -106,8 +111,9 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
             }
         } else {
             Task { [weak self] in
-                self?.posterImageView.contentMode = .scaleAspectFit
-                self?.posterImageView.image = await NetworkManager.shared.downloadImage(from: "https://image.tmdb.org/t/p/w1280\(wrappedMovieDetail.movieDetail.backdropPath).jpg")
+                guard let self else { return }
+               posterImageView.contentMode = .scaleAspectFit
+               posterImageView.image = await networkManager?.downloadImage(from: "https://image.tmdb.org/t/p/w1280\(wrappedMovieDetail.movieDetail.backdropPath).jpg")
             }
         }
        
@@ -245,8 +251,9 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
             collectionViewDivider.heightAnchor.constraint(equalToConstant: 0.5)
         ])
         
-        let recommendationCell = UICollectionView.CellRegistration<RecommendationCell, MovieResult> { cell, indexPath, movieResult in
-            cell.set(movieResult: movieResult)
+        let recommendationCell = UICollectionView.CellRegistration<RecommendationCell, MovieResult> { [weak self] cell, indexPath, movieResult in
+            guard let self else { return }
+            cell.set(movieResult: movieResult, networkManager: networkManager)
         }
         
         recommendationDataSource = UICollectionViewDiffableDataSource(collectionView: recommendationCollectionView) { collectionView, indexPath, movieResult in
@@ -271,9 +278,10 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
             reviewTableView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor, constant: -verticalPadding)
         ])
         
-        reviewDataSource = UITableViewDiffableDataSource(tableView: reviewTableView) { tableView, indexPath, review in
+        reviewDataSource = UITableViewDiffableDataSource(tableView: reviewTableView) { [weak self] tableView, indexPath, review in
+            guard let self else { return UITableViewCell() }
             let cell = tableView.dequeueReusableCell(withIdentifier: ReviewCell.reuseID, for: indexPath) as? ReviewCell
-            cell?.set(review: review)
+            cell?.set(review: review, networkManager: networkManager)
             cell?.selectionStyle = .none
             cell?.delegate = self
             
@@ -285,14 +293,14 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
         var snapshot = NSDiffableDataSourceSnapshot<Section, MovieResult>()
         snapshot.appendSections([.main])
         snapshot.appendItems(presenter?.movieRecommendations ?? [])
-        recommendationDataSource.apply(snapshot, animatingDifferences: true)
+        DispatchQueue.main.async { self.recommendationDataSource.apply(snapshot, animatingDifferences: true) }
     }
     
     func updateReviewDataSource() {
         var snapshot = NSDiffableDataSourceSnapshot<Section, Review>()
         snapshot.appendSections([.main])
         snapshot.appendItems(presenter?.movieReviews ?? [])
-        reviewDataSource.apply(snapshot, animatingDifferences: true)
+        DispatchQueue.main.async { self.reviewDataSource.apply(snapshot, animatingDifferences: true) }
     }
     
     private func getMovieDetailAndReview() {
@@ -302,11 +310,9 @@ class MovieDetailViewController: UIViewController, MovieDetailView {
     func updateMovieDetails(_ result: Result<WrappedMovieDetail, NetworkingError>) {
         switch result {
         case .success(let wrappedMovieDetail):
-            DispatchQueue.main.async {
-                self.set(wrappedMovieDetail: wrappedMovieDetail)
-                self.updateRecommendationDataSource()
-                self.updateReviewDataSource()
-            }
+            DispatchQueue.main.async { self.set(wrappedMovieDetail: wrappedMovieDetail) }
+            updateRecommendationDataSource()
+            updateReviewDataSource()
             
         case .failure(let failure):
             print("Network error: \(failure)")

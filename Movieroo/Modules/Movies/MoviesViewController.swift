@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import Swinject
 
 protocol MoviesView: AnyObject {
     var presenter: MoviesPresenter? { get set }
@@ -14,10 +15,20 @@ protocol MoviesView: AnyObject {
 }
 
 class MoviesViewController: UIViewController, MoviesView {
+    let container: Resolver
     var presenter: MoviesPresenter?
     var isSearching = false
     var movieCollectionView: UICollectionView!
     var dataSource: UICollectionViewDiffableDataSource<Section, MovieResult>!
+    
+    init(container: Resolver) {
+        self.container = container
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError()
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -79,8 +90,9 @@ class MoviesViewController: UIViewController, MoviesView {
         view.addSubview(movieCollectionView)
         movieCollectionView.pinToEdges(of: view)
         
-        let movieCell = UICollectionView.CellRegistration<MovieCell, MovieResult> { cell, indexPath, movie in
-            cell.set(movie: movie)
+        let movieCell = UICollectionView.CellRegistration<MovieCell, MovieResult> { [weak self] cell, indexPath, movie in
+            guard let self else { return }
+            cell.set(movie: movie, networkManager: container.resolve(NetworkManager.self))
         }
         dataSource = UICollectionViewDiffableDataSource<Section, MovieResult>(collectionView: movieCollectionView) { collectionView, indexPath, movie in
             return collectionView.dequeueConfiguredReusableCell(using: movieCell, for: indexPath, item: movie)
@@ -151,5 +163,5 @@ extension MoviesViewController: UICollectionViewDelegate {
 }
 
 #Preview {
-    MoviesViewController()
+    MoviesViewController(container: Container())
 }

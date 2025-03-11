@@ -45,10 +45,10 @@ class ReviewCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func set(review: Review) {
+    func set(review: Review, networkManager: NetworkManager?) {
         if let avatarPath = review.authorDetails?.avatarPath {
             Task { [weak self] in
-                self?.authorAvatar.image = await NetworkManager.shared.downloadImage(from: "https://image.tmdb.org/t/p/w45\(avatarPath)")
+                self?.authorAvatar.image = await networkManager?.downloadImage(from: "https://image.tmdb.org/t/p/w45\(avatarPath)")
             }
         }
         
@@ -177,7 +177,7 @@ class ReviewCell: UITableViewCell {
 
 #Preview {
     let cell = ReviewCell()
-    cell.set(review: WrappedMovieDetail.test.movieReview.reviews.first!)
+    cell.set(review: WrappedMovieDetail.test.movieReview.reviews.first!, networkManager: NetworkManagerImpl())
     
     return cell
 }

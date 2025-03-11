@@ -24,12 +24,12 @@ struct UIHelper {
         leadingAction: ((IndexPath) -> UISwipeActionsConfiguration)? = nil,
         trailingAction: ((IndexPath) -> UISwipeActionsConfiguration)? = nil
     ) -> UICollectionViewCompositionalLayout {
-        var listConfig = UICollectionLayoutListConfiguration(appearance: .plain)
-        listConfig.showsSeparators = false
-        listConfig.leadingSwipeActionsConfigurationProvider = leadingAction
-        listConfig.trailingSwipeActionsConfigurationProvider = trailingAction
-        
         let layout = UICollectionViewCompositionalLayout { sectionIndex, layoutEnvironment in
+            var listConfig = UICollectionLayoutListConfiguration(appearance: .plain)
+            listConfig.showsSeparators = false
+            listConfig.leadingSwipeActionsConfigurationProvider = leadingAction
+            listConfig.trailingSwipeActionsConfigurationProvider = trailingAction
+            
             let section = NSCollectionLayoutSection.list(using: listConfig, layoutEnvironment: layoutEnvironment)
             section.interGroupSpacing = interGroupSpacing
             return section

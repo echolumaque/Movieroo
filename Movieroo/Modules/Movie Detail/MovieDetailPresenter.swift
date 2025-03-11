@@ -24,7 +24,7 @@ protocol MovieDetailPresenter: AnyObject {
     func fetchMovieRecommendations(for id: Int) async throws(NetworkingError)
     func fetchMovieReviews(for id: Int) async throws(NetworkingError)
     
-    func upsertFavoriteMovie(movie: MovieResult)
+    func upsertFavoriteMovie(movie: MovieResult, persistenceManager: PersistenceManager?)
 }
 
 class MovieDetailPresenterImpl: MovieDetailPresenter {
@@ -68,8 +68,8 @@ class MovieDetailPresenterImpl: MovieDetailPresenter {
         if !reviews.isEmpty { view?.updateReviewDataSource() }
     }
     
-    func upsertFavoriteMovie(movie: MovieResult) {
-        let isAdded = PersistenceManager.upsertFavorite(movie: movie)
+    func upsertFavoriteMovie(movie: MovieResult, persistenceManager: PersistenceManager?) {
+        let isAdded = persistenceManager?.upsertFavorite(movie: movie) ?? false
         (view as? UIViewController)?.navigationItem.rightBarButtonItems?[0].image = UIImage(systemName: isAdded ? "bookmark.fill" : "bookmark")
     }
 }

@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import Swinject
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     var window: UIWindow?
@@ -13,19 +14,23 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = (scene as? UIWindowScene) else { return }
         
-//        let mainTabRouter = MainTabRouterImpl.start()
-//        let initialVC = mainTabRouter.entry
-//        let window = UIWindow(windowScene: windowScene)
-//        window.rootViewController = initialVC
-//        self.window = window
-//        window.makeKeyAndVisible()
+        let container = Container()
+        _ = Assembler(
+            [
+                ServicesAssembly(),
+                MainTabAssembly(),
+                MoviesAssembly(),
+                MovieDetailAssembly()
+            ],
+            container: container)
         
-        let router = MainTabRouterImpl.start()
         window = UIWindow(frame: windowScene.coordinateSpace.bounds)
         window?.windowScene = windowScene
-        window?.rootViewController = router.view
+        window?.rootViewController = container.resolve(MainTabRouter.self)?.view
         window?.makeKeyAndVisible()
         
         UINavigationBar.appearance().tintColor = .systemPurple
     }
 }
+
+

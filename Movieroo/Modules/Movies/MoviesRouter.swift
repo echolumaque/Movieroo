@@ -6,49 +6,29 @@
 //
 
 import UIKit
+import Swinject
 
 typealias MoviesEntryPoint = MoviesView & UIViewController
 
 protocol MoviesRouter {
     var view: MoviesEntryPoint? { get }
-    static func start() -> MoviesRouter
     
     func showMovieDetail(for movie: MovieResult)
     func showGenreSheet()
 }
 
 class MoviesRouterImpl: MoviesRouter {
-    // Private strong reference to keep the view alive during assembly.
-    private var moviesViewController: MoviesEntryPoint?
+    let container: Resolver
+    var moviesViewController: MoviesEntryPoint? // Private strong reference to keep the view alive during assembly.
+    weak var view: (any MoviesEntryPoint)? { moviesViewController } // Publicly, we expose a weak reference.
     
-    // Publicly, we expose a weak reference.
-    weak var view: (any MoviesEntryPoint)? {
-        return moviesViewController
-    }
-    
-    static func start() -> any MoviesRouter {
-        let view = MoviesViewController()
-        let interactor = MoviesInteractorImpl()
-        let presenter = MoviesPresenterImpl()
-        let router = MoviesRouterImpl()
-        
-        view.presenter = presenter
-        
-        interactor.presenter = presenter
-        
-        presenter.view = view
-        presenter.interactor = interactor
-        presenter.router = router
-        
-        router.moviesViewController = view
-        return router
+    init(container: Resolver) {
+        self.container = container
     }
     
     func showMovieDetail(for movie: MovieResult) {
-        let movieDetail = MovieDetailRouterImpl.start(movie: movie)
-        let movieDetailView = movieDetail.view
-        
-        let movieDetailVC = UINavigationController(rootViewController: movieDetailView ?? UIViewController())
+        let movieDetail = container.resolve(MovieDetailRouter.self, argument: movie)?.view
+        let movieDetailVC = UINavigationController(rootViewController: movieDetail ?? UIViewController())
         moviesViewController?.present(movieDetailVC, animated: true)
     }
     

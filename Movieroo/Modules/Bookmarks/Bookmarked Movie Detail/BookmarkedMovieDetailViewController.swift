@@ -10,6 +10,7 @@ import WebKit
 
 class BookmarkedMovieDetailViewController: BindableViewController {
     weak var dismissDelegate: DismissDelegate?
+    private let networkManager: NetworkManager
     private let vm: BookmarkedMovieDetailViewModel
     
     private let horizontalPadding: CGFloat = 16
@@ -43,7 +44,8 @@ class BookmarkedMovieDetailViewController: BindableViewController {
     private let reviewTableView = DynamicTableView()
     private var reviewDataSource: UITableViewDiffableDataSource<Section, Review>!
     
-    init(vm: BookmarkedMovieDetailViewModel) {
+    init(networkManager: NetworkManager, vm: BookmarkedMovieDetailViewModel) {
+        self.networkManager = networkManager
         self.vm = vm
         super.init(nibName: nil, bundle: nil)
     }
@@ -132,7 +134,7 @@ class BookmarkedMovieDetailViewController: BindableViewController {
         } else {
             Task { [weak self] in
                 self?.posterImageView.contentMode = .scaleAspectFit
-                self?.posterImageView.image = await NetworkManager.shared.downloadImage(from: "https://image.tmdb.org/t/p/w1280\(wrappedMovieDetail.movieDetail.backdropPath).jpg")
+                self?.posterImageView.image = await self?.networkManager.downloadImage(from: "https://image.tmdb.org/t/p/w1280\(wrappedMovieDetail.movieDetail.backdropPath).jpg")
             }
         }
        
@@ -269,8 +271,9 @@ class BookmarkedMovieDetailViewController: BindableViewController {
             collectionViewDivider.heightAnchor.constraint(equalToConstant: 0.5)
         ])
         
-        let recommendationCell = UICollectionView.CellRegistration<RecommendationCell, MovieResult> { cell, indexPath, movieResult in
-            cell.set(movieResult: movieResult)
+        let recommendationCell = UICollectionView.CellRegistration<RecommendationCell, MovieResult> { [weak self] cell, indexPath, movieResult in
+            guard let self else { return }
+            cell.set(movieResult: movieResult, networkManager: networkManager)
         }
         
         recommendationDataSource = UICollectionViewDiffableDataSource(collectionView: recommendationCollectionView) { collectionView, indexPath, movieResult in
@@ -295,9 +298,11 @@ class BookmarkedMovieDetailViewController: BindableViewController {
             reviewTableView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor, constant: -verticalPadding)
         ])
         
-        reviewDataSource = UITableViewDiffableDataSource(tableView: reviewTableView) { tableView, indexPath, review in
+        reviewDataSource = UITableViewDiffableDataSource(tableView: reviewTableView) { [weak self] tableView, indexPath, review in
+            guard let self else { return nil }
+            
             let cell = tableView.dequeueReusableCell(withIdentifier: ReviewCell.reuseID, for: indexPath) as? ReviewCell
-            cell?.set(review: review)
+            cell?.set(review: review, networkManager: networkManager)
             cell?.selectionStyle = .none
             cell?.delegate = self
             

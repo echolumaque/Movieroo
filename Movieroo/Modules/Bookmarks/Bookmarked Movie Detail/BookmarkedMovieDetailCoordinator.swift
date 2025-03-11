@@ -10,9 +10,11 @@ import UIKit
 class BookmarkedMovieDetailCoordinator: Coordinator {
     var onFinished: (() -> Void)?
     var viewController: UIViewController!
+    private let networkManager: NetworkManager
     private let vm: BookmarkedMovieDetailViewModel
     
-    init(networkManager: NetworkManagerClass, persistenceManager: PersistenceManagerClass, selectedMovie: MovieResult) {
+    init(networkManager: NetworkManager, persistenceManager: PersistenceManager, selectedMovie: MovieResult) {
+        self.networkManager = networkManager
         vm = BookmarkedMovieDetailViewModel(
             networkManager: networkManager,
             persistenceManager: persistenceManager,
@@ -21,7 +23,7 @@ class BookmarkedMovieDetailCoordinator: Coordinator {
     }
     
     func start() {
-        let vc = BookmarkedMovieDetailViewController(vm: vm)
+        let vc = BookmarkedMovieDetailViewController(networkManager: networkManager, vm: vm)
         vc.dismissDelegate = self
         vc.hidesBottomBarWhenPushed = true
         viewController = vc

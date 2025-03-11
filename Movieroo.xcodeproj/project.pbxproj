@@ -6,8 +6,15 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		2AE292B00440A5D016687AB7 /* Pods_Movieroo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 586C151B8F9D0A1770491F89 /* Pods_Movieroo.framework */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		468609ED2D6B7BAD00D478BC /* Movieroo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Movieroo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		586C151B8F9D0A1770491F89 /* Pods_Movieroo.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Movieroo.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		62D6815C1E6B2C6009DEE717 /* Pods-Movieroo.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Movieroo.debug.xcconfig"; path = "Target Support Files/Pods-Movieroo/Pods-Movieroo.debug.xcconfig"; sourceTree = "<group>"; };
+		AA78956976F1EB42E0657B85 /* Pods-Movieroo.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Movieroo.release.xcconfig"; path = "Target Support Files/Pods-Movieroo/Pods-Movieroo.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -36,6 +43,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2AE292B00440A5D016687AB7 /* Pods_Movieroo.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -47,6 +55,8 @@
 			children = (
 				468609EF2D6B7BAD00D478BC /* Movieroo */,
 				468609EE2D6B7BAD00D478BC /* Products */,
+				B77F46CC2BA2A28C5D6D2A16 /* Pods */,
+				CEED674986062EEA3F099ABB /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -58,6 +68,23 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		B77F46CC2BA2A28C5D6D2A16 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				62D6815C1E6B2C6009DEE717 /* Pods-Movieroo.debug.xcconfig */,
+				AA78956976F1EB42E0657B85 /* Pods-Movieroo.release.xcconfig */,
+			);
+			path = Pods;
+			sourceTree = "<group>";
+		};
+		CEED674986062EEA3F099ABB /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				586C151B8F9D0A1770491F89 /* Pods_Movieroo.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -65,9 +92,11 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 46860A032D6B7BAE00D478BC /* Build configuration list for PBXNativeTarget "Movieroo" */;
 			buildPhases = (
+				F66F3F904A66AA923364FE44 /* [CP] Check Pods Manifest.lock */,
 				468609E92D6B7BAD00D478BC /* Sources */,
 				468609EA2D6B7BAD00D478BC /* Frameworks */,
 				468609EB2D6B7BAD00D478BC /* Resources */,
+				70C481C0E3FB37A905DF2793 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -77,8 +106,6 @@
 				468609EF2D6B7BAD00D478BC /* Movieroo */,
 			);
 			name = Movieroo;
-			packageProductDependencies = (
-			);
 			productName = Movieroo;
 			productReference = 468609ED2D6B7BAD00D478BC /* Movieroo.app */;
 			productType = "com.apple.product-type.application";
@@ -127,6 +154,48 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		70C481C0E3FB37A905DF2793 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Movieroo/Pods-Movieroo-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Movieroo/Pods-Movieroo-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Movieroo/Pods-Movieroo-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		F66F3F904A66AA923364FE44 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-Movieroo-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		468609E92D6B7BAD00D478BC /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -140,8 +209,7 @@
 /* Begin XCBuildConfiguration section */
 		46860A042D6B7BAE00D478BC /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReferenceAnchor = 468609EF2D6B7BAD00D478BC /* Movieroo */;
-			baseConfigurationReferenceRelativePath = Config.xcconfig;
+			baseConfigurationReference = 62D6815C1E6B2C6009DEE717 /* Pods-Movieroo.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -175,8 +243,7 @@
 		};
 		46860A052D6B7BAE00D478BC /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReferenceAnchor = 468609EF2D6B7BAD00D478BC /* Movieroo */;
-			baseConfigurationReferenceRelativePath = Config.xcconfig;
+			baseConfigurationReference = AA78956976F1EB42E0657B85 /* Pods-Movieroo.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -247,7 +314,7 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -312,7 +379,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;

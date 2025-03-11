@@ -7,6 +7,7 @@
 
 import Combine
 import UIKit
+import Swinject
 
 class BookmarksCoordinator: Coordinator {
     var cancellables = Set<AnyCancellable>()
@@ -15,17 +16,17 @@ class BookmarksCoordinator: Coordinator {
     var onFinished: (() -> Void)?
     private let bookmarksVM: BookmarksViewModel
     
-    private let networkManager: NetworkManagerClass
-    private let persistenceManager: PersistenceManagerClass
+    private let networkManager: NetworkManager
+    private let persistenceManager: PersistenceManager
     
-    init(networkManager: NetworkManagerClass, persistenceManager: PersistenceManagerClass) {
+    init(networkManager: NetworkManager, persistenceManager: PersistenceManager) {
         self.networkManager = networkManager
         self.persistenceManager = persistenceManager
-        self.bookmarksVM = BookmarksViewModel(persistenceManagerClass: persistenceManager)
+        self.bookmarksVM = BookmarksViewModel(persistenceManager: persistenceManager)
     }
     
     func start() {
-        let bookmarksVC = BookmarksViewController(vm: bookmarksVM)
+        let bookmarksVC = BookmarksViewController(networkManager: networkManager, vm: bookmarksVM)
         bookmarksVC.tabBarItem = UITabBarItem(title: "Bookmarks", image: UIImage(systemName: "bookmark.fill"), tag: 1)
         bookmarksVC.dismissDelegate = self
         rootViewController.setViewControllers([bookmarksVC], animated: true)

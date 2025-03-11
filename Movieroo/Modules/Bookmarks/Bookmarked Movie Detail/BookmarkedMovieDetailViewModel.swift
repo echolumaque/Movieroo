@@ -8,8 +8,8 @@
 import Foundation
 
 class BookmarkedMovieDetailViewModel: ObservableObject {
-    private let networkManager: NetworkManagerClass
-    private let persistenceManager: PersistenceManagerClass
+    private let networkManager: NetworkManager
+    private let persistenceManager: PersistenceManager
     private let selectedMovie: MovieResult
     
     @Published var hasTriggeredLastVisibleRecommendation = false
@@ -20,7 +20,7 @@ class BookmarkedMovieDetailViewModel: ObservableObject {
     @Published var reviewsPage = 1
     @Published var wrappedMovieDetail: WrappedMovieDetail?
 
-    init(networkManager: NetworkManagerClass, persistenceManager: PersistenceManagerClass, selectedMovie: MovieResult) {
+    init(networkManager: NetworkManager, persistenceManager: PersistenceManager, selectedMovie: MovieResult) {
         self.networkManager = networkManager
         self.persistenceManager = persistenceManager
         self.selectedMovie = selectedMovie
@@ -36,7 +36,6 @@ class BookmarkedMovieDetailViewModel: ObservableObject {
             let id = selectedMovie.id
             let movieDetailUrl = "\(Configuration.NetworkCall.baseUrl.rawValue)/movie/\(id)?language=en-US"
             let movieCertificationUrl = "\(Configuration.NetworkCall.baseUrl.rawValue)/movie/\(id)/release_dates"
-            
             
             async let fetchedMovieDetail: MovieDetail = try networkManager.baseNetworkCall(for: movieDetailUrl)
             async let fetchedMovieReview: MovieReview = fetchMovieReviews()
